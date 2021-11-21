@@ -1,0 +1,28 @@
+name: in_app_purchase
+description: In app purchase implementation
+version: 0.0.1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+  flutter: ">=1.20.0"
+
+dependencies:
+  http: ^0.13.0
+  platform: ^3.0.0
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^1.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.kroha.in_app_purchase
+        pluginClass: InAppPurchasePlugin
+      ios:
+        pluginClass: InAppPurchasePlugin
