@@ -33,7 +33,6 @@ struct IAPConvertor {
         ]
     }
     
-    // AKA: InAppPurchase on flutter side
     static func convertSKProduct(_ product: SKProduct) -> [String: Any?] {
         let formatter = NumberFormatter();
         formatter.numberStyle = .currency

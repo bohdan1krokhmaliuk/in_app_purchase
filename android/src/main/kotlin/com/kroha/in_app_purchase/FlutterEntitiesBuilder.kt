@@ -3,24 +3,27 @@ package com.kroha.in_app_purchase
 import com.android.billingclient.api.*
 import java.util.HashMap
 
-
 object FlutterEntitiesBuilder {
     fun buildPurchaseMap(purchase: Purchase): HashMap<String, Any?> {
         val map = HashMap<String, Any?>()
 
         // part of PurchaseHistory object
-        map["sku"] = purchase.sku
+        map["skus"] = purchase.skus
         map["date"] = purchase.purchaseTime
-        map["receipt"] = purchase.originalJson
-
+        map["quantity"] = purchase.quantity
         map["signature"] = purchase.signature
+        map["receipt"] = purchase.originalJson
         map["purchaseToken"] = purchase.purchaseToken
 
         // additional fields for purchase
         map["transactionId"] = purchase.orderId
-        map["autoRenewingAndroid"] = purchase.isAutoRenewing
-        map["isAcknowledgedAndroid"] = purchase.isAcknowledged
-        map["purchaseStateAndroid"] = purchase.purchaseState
+        map["packageName"] = purchase.packageName
+        map["purchaseState"] = purchase.purchaseState
+        map["isAutoRenewing"] = purchase.isAutoRenewing
+        map["isAcknowledged"] = purchase.isAcknowledged
+        map["developerPayload"] = purchase.developerPayload
+
+
 
         val identifiers = purchase.accountIdentifiers
         if (identifiers != null) {
@@ -69,8 +72,6 @@ object FlutterEntitiesBuilder {
 
         // TODO: kill if not needed
         map["type"] = skuDetails.type
-
-
 
         return map
     }

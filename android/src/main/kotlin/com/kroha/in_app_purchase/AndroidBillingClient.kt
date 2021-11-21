@@ -4,38 +4,24 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
+import com.android.billingclient.api.*
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel.*
 import io.flutter.plugin.common.MethodChannel
 
-import com.android.billingclient.api.BillingClient
-
-import com.android.billingclient.api.SkuDetails
 import java.lang.Exception
-import com.android.billingclient.api.BillingResult
-
-import com.android.billingclient.api.BillingClientStateListener
-
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildBillingResultMap
-import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseMap
-
-import com.android.billingclient.api.ConsumeResponseListener
-
-import com.android.billingclient.api.ConsumeParams
 import java.lang.Error
-import com.android.billingclient.api.SkuDetailsResponseListener
 
-import com.android.billingclient.api.SkuDetailsParams
+import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseMap
 import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildSkuDetailsMap
-
-import com.android.billingclient.api.PurchaseHistoryResponseListener
+import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildBillingResultMap
 import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseHistoryRecordMap
-import com.android.billingclient.api.BillingFlowParams
 
-import com.android.billingclient.api.AcknowledgePurchaseParams
 
-class AndroidBillingClient: MethodCallHandler,  Application.ActivityLifecycleCallbacks {
+
+
+
+class AndroidBillingClient: MethodCallHandler, Application.ActivityLifecycleCallbacks {
     private lateinit var channel: MethodChannel
     private lateinit var applicationContext: Context
     private var activity: Activity? = null
@@ -255,30 +241,34 @@ class AndroidBillingClient: MethodCallHandler,  Application.ActivityLifecycleCal
                 return result.error("consumeAllItems", errorMessage, "")
             }
 
-            val array: ArrayList<String> = ArrayList()
-            val purchasesResult = billingClient!!.queryPurchases(BillingClient.SkuType.INAPP)
+            billingClient!!.queryPurchasesAsync( BillingClient.SkuType.INAPP ) { billingResult, purchases ->
+                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    val resultMap = ErrorUtils.getBillingResponseData(billingResult.responseCode)
+                    result.error(resultMap[0], resultMap[1], billingResult.debugMessage)
+                }
+                if(purchases.isEmpty()) {
+                     result.error("consumeAllItems", "refreshItem", "No purchases found")
+                }
+                else {
+                    val array: ArrayList<String> = ArrayList()
+                    for (purchase in purchases) {
+                        val consumeParams = ConsumeParams.newBuilder()
+                            .setPurchaseToken(purchase.purchaseToken)
+                            .build()
 
-            val purchases = purchasesResult.purchasesList
-            if (purchases == null || purchases.isEmpty()) {
-                return result.error("consumeAllItems", "refreshItem", "No purchases found")
-            }
+                        val listener =
+                            ConsumeResponseListener { _, outToken ->
+                                array.add(outToken)
+                                if (purchases.size == array.size) {
+                                    result.success(array)
+                                }
+                            }
 
-            for (purchase in purchases) {
-                val consumeParams = ConsumeParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-
-                val listener =
-                    ConsumeResponseListener { _, outToken ->
-                        array.add(outToken)
-
-                        if (purchases.size == array.size) {
-                            result.success(array)
-                        }
+                        billingClient!!.consumeAsync(consumeParams, listener)
                     }
-
-                billingClient!!.consumeAsync(consumeParams, listener)
+                }
             }
+
         } catch (err: Error) {
             result.error("consumeAllItems", err.message, "")
         }
@@ -317,18 +307,18 @@ class AndroidBillingClient: MethodCallHandler,  Application.ActivityLifecycleCal
             return result.error("getItemsByType", errorMessage, "")
         }
 
-        val purchasesResult =
-            billingClient!!.queryPurchases(if (type == "subs") BillingClient.SkuType.SUBS else BillingClient.SkuType.INAPP)
-        val purchases = purchasesResult.purchasesList
-        val items: ArrayList<HashMap<String, Any?>> = ArrayList()
-
-        if (purchases != null) {
+        billingClient!!.queryPurchasesAsync(if (type == "subs") BillingClient.SkuType.SUBS else BillingClient.SkuType.INAPP)
+        { billingResult, purchases ->
+            if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                val resultMap = ErrorUtils.getBillingResponseData(billingResult.responseCode)
+                result.error(resultMap[0], resultMap[1], billingResult.debugMessage)
+            }
+            val items: ArrayList<HashMap<String, Any?>> = ArrayList()
             for (purchase in purchases) {
                 items.add(buildPurchaseMap(purchase))
             }
+            result.success(items)
         }
-
-        result.success(items)
     }
 
     private fun getPurchaseHistoryByType(result: Result, type: String) {
@@ -387,11 +377,14 @@ class AndroidBillingClient: MethodCallHandler,  Application.ActivityLifecycleCal
 
         // Subscription upgrade/downgrade
         if (type == BillingClient.SkuType.SUBS && oldSku != null && oldSku.isNotEmpty() && purchaseToken != null && purchaseToken.isNotEmpty()) {
-            builder.setOldSku(oldSku, purchaseToken)
+            val updateParams = BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                .setOldSkuPurchaseToken(purchaseToken)
+                .setReplaceSkusProrationMode(prorationMode)
+                .build()
+
+            builder.setSubscriptionUpdateParams(updateParams)
         }
-        if (prorationMode > 0) {
-            builder.setReplaceSkusProrationMode(prorationMode)
-        }
+
         if (obfuscatedAccountId != null) {
             builder.setObfuscatedAccountId(obfuscatedAccountId)
         }
@@ -450,5 +443,4 @@ class AndroidBillingClient: MethodCallHandler,  Application.ActivityLifecycleCal
             }
         }
     }
-
 }
