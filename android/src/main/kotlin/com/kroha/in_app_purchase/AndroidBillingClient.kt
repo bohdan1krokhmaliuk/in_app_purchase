@@ -8,8 +8,6 @@ import com.android.billingclient.api.*
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel.*
 import io.flutter.plugin.common.MethodChannel
-
-import java.lang.Exception
 import java.lang.Error
 
 import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseMap
@@ -164,10 +162,7 @@ class AndroidBillingClient: MethodCallHandler, Application.ActivityLifecycleCall
             }
             if (purchases == null) {
                 val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                val resultMap = buildBillingResultMap(
-                    billingResult,
-                    errorData[0], "purchases returns null"
-                )
+                val resultMap = buildBillingResultMap(billingResult, errorData[0], "purchases returns null")
                 channel.invokeMethod("purchase-error", resultMap)
                 return@PurchasesUpdatedListener
             }
@@ -178,10 +173,8 @@ class AndroidBillingClient: MethodCallHandler, Application.ActivityLifecycleCall
 
     private fun endBillingClientConnection() {
         if (billingClient != null) {
-            try {
-                billingClient!!.endConnection()
-                billingClient = null
-            } catch (ignored: Exception){}
+            billingClient!!.endConnection()
+            billingClient = null
         }
     }
 
@@ -190,25 +183,24 @@ class AndroidBillingClient: MethodCallHandler, Application.ActivityLifecycleCall
             return result.success("Already started. Call endConnection method if you want to start over.")
         }
 
-
         billingClient = BillingClient.newBuilder(applicationContext).setListener(purchasesUpdatedListener)
             .enablePendingPurchases()
             .build()
 
         billingClient!!.startConnection(object : BillingClientStateListener {
             private var isSetUp = false
+
             override fun onBillingSetupFinished(billingResult: BillingResult) {
-                val responseCode = billingResult.responseCode
                 if (isSetUp) return
                 val item: HashMap<String, Boolean> = HashMap()
-                if (responseCode == BillingClient.BillingResponseCode.OK) {
-                    item["connected"] = true
-                    channel.invokeMethod("connection-updated", item)
-                    result.success("Billing client ready")
+                val isConnected = billingResult.responseCode == BillingClient.BillingResponseCode.OK
+                item["connected"] = isConnected
+                channel.invokeMethod("connection-updated", item)
+
+                if (isConnected) {
+                    result.success(true)
                 } else {
-                    item["connected"] = false
-                    channel.invokeMethod("connection-updated", item)
-                    result.error("initConnection", "responseCode: $responseCode", "")
+                    result.error("initConnection", "responseCode: ${billingResult.responseCode}", billingResult.debugMessage)
                 }
 
                 isSetUp = true
@@ -217,22 +209,15 @@ class AndroidBillingClient: MethodCallHandler, Application.ActivityLifecycleCall
             override fun onBillingServiceDisconnected() {
                 val item: HashMap<String, Boolean> = HashMap()
                 item["connected"] = false
-                channel.invokeMethod("connection-updated", item)
+                channel.invokeMethod("connection-updated", item )
                 isSetUp = false
             }
         })
     }
 
     private fun endConnection(result: Result) {
-        if (billingClient != null) {
-            try {
-                billingClient!!.endConnection()
-                billingClient = null
-                result.success("Billing client has ended.")
-            } catch (e: Exception) {
-                result.error("endConnection", e.message, "")
-            }
-        }
+        endBillingClientConnection()
+        result.success(true)
     }
 
     private fun consumeAllItems(result: Result) {

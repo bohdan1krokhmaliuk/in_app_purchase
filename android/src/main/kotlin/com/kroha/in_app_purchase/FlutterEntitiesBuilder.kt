@@ -35,6 +35,7 @@ object FlutterEntitiesBuilder {
     }
 
     fun buildPurchaseHistoryRecordMap(record: PurchaseHistoryRecord): HashMap<String, Any> {
+        // TODO?
         val map = HashMap<String, Any>()
         map["sku"] = record.sku
         map["signatureAndroid"] = record.signature
