@@ -9,14 +9,14 @@ object FlutterEntitiesBuilder {
         val map = HashMap<String, Any?>()
 
         // part of PurchaseHistory object
-        map["productId"] = purchase.sku
-        map["signatureAndroid"] = purchase.signature
+        map["sku"] = purchase.sku
+        map["date"] = purchase.purchaseTime
+        map["receipt"] = purchase.originalJson
+
+        map["signature"] = purchase.signature
         map["purchaseToken"] = purchase.purchaseToken
-        map["transactionDate"] = purchase.purchaseTime
-        map["transactionReceipt"] = purchase.originalJson
 
         // additional fields for purchase
-        map["orderId"] = purchase.orderId
         map["transactionId"] = purchase.orderId
         map["autoRenewingAndroid"] = purchase.isAutoRenewing
         map["isAcknowledgedAndroid"] = purchase.isAcknowledged
@@ -33,7 +33,7 @@ object FlutterEntitiesBuilder {
 
     fun buildPurchaseHistoryRecordMap(record: PurchaseHistoryRecord): HashMap<String, Any> {
         val map = HashMap<String, Any>()
-        map["productId"] = record.sku
+        map["sku"] = record.sku
         map["signatureAndroid"] = record.signature
         map["purchaseToken"] = record.purchaseToken
         map["transactionDate"] = record.purchaseTime
@@ -43,21 +43,35 @@ object FlutterEntitiesBuilder {
 
     fun buildSkuDetailsMap(skuDetails: SkuDetails): HashMap<String, Any> {
         val map = HashMap<String, Any>()
-        map["productId"] = skuDetails.sku
+
+        map["sku"] = skuDetails.sku
         map["price"] = (skuDetails.priceAmountMicros / 1000000f).toString()
         map["currency"] = skuDetails.priceCurrencyCode
-        map["type"] = skuDetails.type
         map["localizedPrice"] = skuDetails.price
         map["title"] = skuDetails.title
         map["description"] = skuDetails.description
-        map["introductoryPrice"] = skuDetails.introductoryPrice
-        map["subscriptionPeriodAndroid"] = skuDetails.subscriptionPeriod
-        map["freeTrialPeriodAndroid"] = skuDetails.freeTrialPeriod
-        map["introductoryPriceCyclesAndroid"] = skuDetails.introductoryPriceCycles
-        map["introductoryPricePeriodAndroid"] = skuDetails.introductoryPricePeriod
+        map["subscriptionPeriod"] = skuDetails.subscriptionPeriod
+
+        if (skuDetails.type == BillingClient.SkuType.SUBS && skuDetails.introductoryPriceCycles != 0) {
+            val discountMap = HashMap<String, Any>()
+            discountMap["currency"] = skuDetails.priceCurrencyCode
+            discountMap["period"] = skuDetails.introductoryPricePeriod
+            discountMap["localizedPrice"] = skuDetails.introductoryPrice
+            discountMap["numberOfPeriods"] = skuDetails.introductoryPriceCycles
+            discountMap["price"] = (skuDetails.introductoryPriceAmountMicros / 1000000f).toString()
+            map["introductoryDiscount"] = discountMap
+        }
+
+        map["freeTrial"] = skuDetails.freeTrialPeriod
         map["iconUrl"] = skuDetails.iconUrl
-        map["originalJson"] = skuDetails.originalJson
+        map["originalLocalizedPrice"] = skuDetails.originalPrice
         map["originalPrice"] = skuDetails.originalPriceAmountMicros / 1000000f
+
+        // TODO: kill if not needed
+        map["type"] = skuDetails.type
+
+
+
         return map
     }
 

@@ -315,7 +315,11 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
     
     func processPurchase(_ transaction: SKPaymentTransaction) {
         receiptService.requestReceiptData(){ (receipt, error) -> () in
-            self.channel.invokeMethod("purchase-updated", arguments: IAPConvertor.convertSKPaymentTransaction(transaction, receipt))
+            if receipt != nil {
+                self.channel.invokeMethod(
+                    "purchase-updated", arguments: IAPConvertor.convertSKPaymentTransaction(transaction, receipt!)
+                )
+            }
         }
     }
     
@@ -326,11 +330,11 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
                 if error != nil {
                     result(error)
                 }
-                else {
+                else if receipt != nil {
                     var transactionMaps = [[String: Any?]]()
                     for transaction in queue.transactions {
                         if transaction.transactionState == .restored || transaction.transactionState == .purchased {
-                            transactionMaps.append(IAPConvertor.convertSKPaymentTransaction(transaction, receipt))
+                            transactionMaps.append(IAPConvertor.convertSKPaymentTransaction(transaction, receipt!))
                             queue.finishTransaction(transaction)
                         }
                     }

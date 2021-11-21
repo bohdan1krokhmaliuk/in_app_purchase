@@ -1,16 +1,13 @@
 /// An item available for purchase from either the `Google Play Store` or `iOS AppStore`
-class IAPItem {
+class InAppPurchase {
   final String title;
+  final String price;
+  final String currency;
   final String productId;
-  final String? description;
   final String localizedPrice;
+
+  final String? description;
   final String? introductoryPrice;
-
-  /// not nullable for IOS and Android iaps - nullable for Amazon
-  final String? price;
-
-  /// not nullable for IOS and Android iaps - nullable for Amazon
-  final String? currency;
 
   /// ios only
   final String? subscriptionPeriodUnitIOS;
@@ -31,8 +28,8 @@ class IAPItem {
   final String? originalJson;
   final String? iconUrl;
 
-  /// Create [IAPItem] from a Map that was previously JSON formatted
-  IAPItem.fromJSON(Map<String, dynamic> json)
+  /// Create [InAppPurchase] from a Map that was previously JSON formatted
+  InAppPurchase.fromJSON(Map<String, dynamic> json)
       : productId = json['productId'],
         title = json['title'],
         price = json['price'],
@@ -40,9 +37,12 @@ class IAPItem {
         localizedPrice = json['localizedPrice'],
         description = json['description'],
         introductoryPrice = json['introductoryPrice'],
-        introductoryPricePaymentModeIOS = json['introductoryPricePaymentModeIOS'],
-        introductoryPriceNumberOfPeriodsIOS = json['introductoryPriceNumberOfPeriodsIOS'],
-        introductoryPriceSubscriptionPeriodIOS = json['introductoryPriceSubscriptionPeriodIOS'],
+        introductoryPricePaymentModeIOS =
+            json['introductoryPricePaymentModeIOS'],
+        introductoryPriceNumberOfPeriodsIOS =
+            json['introductoryPriceNumberOfPeriodsIOS'],
+        introductoryPriceSubscriptionPeriodIOS =
+            json['introductoryPriceSubscriptionPeriodIOS'],
         introductoryPriceNumberIOS = json['introductoryPriceNumberIOS'],
         subscriptionPeriodNumberIOS = json['subscriptionPeriodNumberIOS'],
         subscriptionPeriodUnitIOS = json['subscriptionPeriodUnitIOS'],
@@ -56,70 +56,6 @@ class IAPItem {
         originalPrice = json['originalPrice'],
         discountsIOS = _extractDiscountIOS(json['discounts']);
 
-  /// wow, i find if i want to save a IAPItem, there is not "toJson" to cast it into String...
-  /// i'm sorry to see that... so,
-  ///
-  /// you can cast a IAPItem to json(Map<String, dynamic>) via invoke this method.
-  /// for example:
-  /// String str =  convert.jsonEncode(item)
-  ///
-  /// and then get IAPItem from "str" above
-  /// IAPItem item = IAPItem.fromJSON(convert.jsonDecode(str));
-  Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['productId'] = productId;
-    data['price'] = price;
-    data['currency'] = currency;
-    data['localizedPrice'] = localizedPrice;
-    data['title'] = title;
-    data['description'] = description;
-    data['introductoryPrice'] = introductoryPrice;
-
-    data['subscriptionPeriodNumberIOS'] = subscriptionPeriodNumberIOS;
-    data['subscriptionPeriodUnitIOS'] = subscriptionPeriodUnitIOS;
-    data['introductoryPricePaymentModeIOS'] = introductoryPricePaymentModeIOS;
-    data['introductoryPriceNumberOfPeriodsIOS'] = introductoryPriceNumberOfPeriodsIOS;
-    data['introductoryPriceSubscriptionPeriodIOS'] = introductoryPriceSubscriptionPeriodIOS;
-
-    data['subscriptionPeriodAndroid'] = subscriptionPeriodAndroid;
-    data['introductoryPriceCyclesAndroid'] = introductoryPriceCyclesAndroid;
-    data['introductoryPricePeriodAndroid'] = introductoryPricePeriodAndroid;
-    data['freeTrialPeriodAndroid'] = freeTrialPeriodAndroid;
-    data['signatureAndroid'] = signatureAndroid;
-
-    data['iconUrl'] = iconUrl;
-    data['originalJson'] = originalJson;
-    data['originalPrice'] = originalPrice;
-    data['discounts'] = discountsIOS;
-    return data;
-  }
-
-  /// Return the contents of this class as a string
-  @override
-  String toString() {
-    return 'productId: $productId, '
-        'price: $price, '
-        'currency: $currency, '
-        'localizedPrice: $localizedPrice, '
-        'title: $title, '
-        'description: $description, '
-        'introductoryPrice: $introductoryPrice, '
-        'introductoryPricePaymentModeIOS: $introductoryPrice, '
-        'subscriptionPeriodNumberIOS: $subscriptionPeriodNumberIOS, '
-        'subscriptionPeriodUnitIOS: $subscriptionPeriodUnitIOS, '
-        'introductoryPricePaymentModeIOS: $introductoryPricePaymentModeIOS, '
-        'introductoryPriceNumberOfPeriodsIOS: $introductoryPriceNumberOfPeriodsIOS, '
-        'introductoryPriceSubscriptionPeriodIOS: $introductoryPriceSubscriptionPeriodIOS, '
-        'subscriptionPeriodAndroid: $subscriptionPeriodAndroid, '
-        'introductoryPriceCyclesAndroid: $introductoryPriceCyclesAndroid, '
-        'introductoryPricePeriodAndroid: $introductoryPricePeriodAndroid, '
-        'freeTrialPeriodAndroid: $freeTrialPeriodAndroid, '
-        'iconUrl: $iconUrl, '
-        'originalJson: $originalJson, '
-        'originalPrice: $originalPrice, '
-        'discounts: $discountsIOS, ';
-  }
-
   static List<DiscountIOS>? _extractDiscountIOS(dynamic json) {
     List? list = json as List?;
     List<DiscountIOS>? discounts;
@@ -127,7 +63,8 @@ class IAPItem {
     if (list != null) {
       discounts = list
           .map<DiscountIOS>(
-            (dynamic discount) => DiscountIOS.fromJSON(discount as Map<String, dynamic>),
+            (dynamic discount) =>
+                DiscountIOS.fromJSON(discount as Map<String, dynamic>),
           )
           .toList();
     }
@@ -136,52 +73,7 @@ class IAPItem {
   }
 }
 
-class DiscountIOS {
-  String? type;
-  double? price;
-  String? identifier;
-  String? paymentMode;
-  String? localizedPrice;
-  String? numberOfPeriods;
-  String? subscriptionPeriod;
-
-  /// Create [DiscountIOS] from a Map that was previously JSON formatted
-  DiscountIOS.fromJSON(Map<String, dynamic> json)
-      : type = json['type'],
-        price = json['price'] as double?,
-        identifier = json['identifier'],
-        paymentMode = json['paymentMode'],
-        localizedPrice = json['localizedPrice'],
-        numberOfPeriods = json['numberOfPeriods'],
-        subscriptionPeriod = json['subscriptionPeriod'];
-
-  Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['identifier'] = identifier;
-    data['type'] = type;
-    data['numberOfPeriods'] = numberOfPeriods;
-    data['price'] = price;
-    data['localizedPrice'] = localizedPrice;
-    data['paymentMode'] = paymentMode;
-    data['subscriptionPeriod'] = subscriptionPeriod;
-    return data;
-  }
-
-  /// Return the contents of this class as a string
-  @override
-  String toString() {
-    return 'identifier: $identifier, '
-        'type: $type, '
-        'numberOfPeriods: $numberOfPeriods, '
-        'price: $price, '
-        'localizedPrice: $localizedPrice, '
-        'paymentMode: $paymentMode, '
-        'subscriptionPeriod: $subscriptionPeriod, ';
-  }
-}
-
 /// An item which was purchased from either the `Google Play Store` or `iOS AppStore`
-
 class PurchasedItem {
   final String productId;
   final DateTime transactionDate;
@@ -214,32 +106,14 @@ class PurchasedItem {
         signatureAndroid = json['signatureAndroid'],
         isAcknowledgedAndroid = json['isAcknowledgedAndroid'],
         autoRenewingAndroid = json['autoRenewingAndroid'],
-        purchaseStateAndroid = _decodePurchaseStateAndroid(json['purchaseStateAndroid']),
-        originalTransactionDateIOS = _extractDate(json['originalTransactionDateIOS']),
-        originalTransactionIdentifierIOS = json['originalTransactionIdentifierIOS'],
-        transactionStateIOS = _decodeTransactionStateIOS(json['transactionStateIOS']);
-
-  /// This returns transaction dates in ISO 8601 format.
-  @override
-  String toString() {
-    return 'productId: $productId, '
-        'transactionId: $transactionId, '
-        'transactionDate: ${transactionDate.toIso8601String()}, '
-        'transactionReceipt: $transactionReceipt, '
-        'purchaseToken: $purchaseToken, '
-        'orderId: $orderId, '
-
-        /// android specific
-        'signatureAndroid: $signatureAndroid, '
-        'isAcknowledgedAndroid: $isAcknowledgedAndroid, '
-        'autoRenewingAndroid: $autoRenewingAndroid, '
-        'purchaseStateAndroid: $purchaseStateAndroid, '
-
-        /// ios specific
-        'originalTransactionDateIOS: ${originalTransactionDateIOS?.toIso8601String()}, '
-        'originalTransactionIdentifierIOS: $originalTransactionIdentifierIOS, '
-        'transactionStateIOS: $transactionStateIOS';
-  }
+        purchaseStateAndroid =
+            _decodePurchaseStateAndroid(json['purchaseStateAndroid']),
+        originalTransactionDateIOS =
+            _extractDate(json['originalTransactionDateIOS']),
+        originalTransactionIdentifierIOS =
+            json['originalTransactionIdentifierIOS'],
+        transactionStateIOS =
+            _decodeTransactionStateIOS(json['transactionStateIOS']);
 
   /// Coerce miliseconds since epoch in double, int, or String into DateTime format
   static DateTime? _extractDate(dynamic timestamp) {
@@ -249,56 +123,42 @@ class PurchasedItem {
   }
 }
 
-class PurchaseResult {
-  final int? responseCode;
-  final String? debugMessage;
-  final String? code;
+class PurchaseError {
+  final int responseCode;
+  final String code;
   final String? message;
+  final String? debugMessage;
 
-  PurchaseResult({
-    this.responseCode,
-    this.debugMessage,
-    this.code,
-    this.message,
+  PurchaseError({
+    required this.code,
+    required this.message,
+    required this.responseCode,
+    required this.debugMessage,
   });
 
-  PurchaseResult.fromJSON(Map<String, dynamic> json)
-      : responseCode = json['responseCode'],
+  PurchaseError.fromJSON(Map<String, dynamic> json)
+      : code = json['code'],
+        message = json['message'],
         debugMessage = json['debugMessage'],
-        code = json['code'],
-        message = json['message'];
+        responseCode = json['responseCode'];
 
   Map<String, dynamic> toJson() => {
-        "responseCode": responseCode ?? 0,
-        "debugMessage": debugMessage ?? '',
-        "code": code ?? '',
-        "message": message ?? '',
+        "code": code,
+        "message": message,
+        "responseCode": responseCode,
+        "debugMessage": debugMessage,
       };
-
-  @override
-  String toString() {
-    return 'responseCode: $responseCode, '
-        'debugMessage: $debugMessage, '
-        'code: $code, '
-        'message: $message';
-  }
 }
 
 class ConnectionResult {
-  final bool? connected;
+  final bool connected;
 
-  ConnectionResult({this.connected});
+  ConnectionResult({required this.connected});
 
-  ConnectionResult.fromJSON(Map<String, dynamic> json) : connected = json['connected'];
+  ConnectionResult.fromJSON(Map<String, dynamic> json)
+      : connected = json['connected'];
 
-  Map<String, dynamic> toJson() => {
-        "connected": connected ?? false,
-      };
-
-  @override
-  String toString() {
-    return 'connected: $connected';
-  }
+  Map<String, dynamic> toJson() => {"connected": connected};
 }
 
 /// See also https://developer.apple.com/documentation/storekit/skpaymenttransactionstate

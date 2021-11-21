@@ -17,19 +17,24 @@ enum _TypeInApp { inapp, subs }
 
 // TODO: Rename to InappPurchase + RENAME file
 class FlutterInappPurchase {
-  static FlutterInappPurchase instance = FlutterInappPurchase(FlutterInappPurchase.private(const LocalPlatform()));
+  static FlutterInappPurchase instance =
+      FlutterInappPurchase(FlutterInappPurchase.private(const LocalPlatform()));
 
   static StreamController<PurchasedItem>? _purchaseController;
-  static Stream<PurchasedItem> get purchaseUpdated => _purchaseController!.stream;
+  static Stream<PurchasedItem> get purchaseUpdated =>
+      _purchaseController!.stream;
 
-  static StreamController<PurchaseResult>? _purchaseErrorController;
-  static Stream<PurchaseResult> get purchaseError => _purchaseErrorController!.stream;
+  static StreamController<PurchaseError>? _purchaseErrorController;
+  static Stream<PurchaseError> get purchaseError =>
+      _purchaseErrorController!.stream;
 
   static StreamController<ConnectionResult>? _connectionController;
-  static Stream<ConnectionResult> get connectionUpdated => _connectionController!.stream;
+  static Stream<ConnectionResult> get connectionUpdated =>
+      _connectionController!.stream;
 
   static StreamController<String>? _purchasePromotedController;
-  static Stream<String> get purchasePromoted => _purchasePromotedController!.stream;
+  static Stream<String> get purchasePromoted =>
+      _purchasePromotedController!.stream;
 
   /// Defining the [MethodChannel] for Flutter_Inapp_Purchase
   static const MethodChannel _channel = MethodChannel('in_app_purchase');
@@ -87,7 +92,7 @@ class FlutterInappPurchase {
   /// Retrieves a list of products from the store on `Android` and `iOS`.
   ///
   /// `iOS` also returns subscriptions.
-  Future<List<IAPItem>> getProducts(List<String> skus) async {
+  Future<List<InAppPurchase>> getProducts(List<String> skus) async {
     if (skus.isEmpty) return [];
     if (_platform.isAndroid) {
       final result = await _channel.invokeListMethod<Map>(
@@ -112,7 +117,7 @@ class FlutterInappPurchase {
   /// Retrieves subscriptions on `Android` and `iOS`.
   ///
   /// `iOS` also returns non-subscription products.
-  Future<List<IAPItem>> getSubscriptions(List<String> skus) async {
+  Future<List<InAppPurchase>> getSubscriptions(List<String> skus) async {
     if (skus.isEmpty) return [];
     if (_platform.isAndroid) {
       final result = await _channel.invokeListMethod(
@@ -152,7 +157,8 @@ class FlutterInappPurchase {
         <String, dynamic>{'type': EnumUtil.getValueString(_TypeInApp.subs)},
       );
 
-      final results = await Future.wait([getInappPurchaseHistory, getSubsPurchaseHistory]);
+      final results =
+          await Future.wait([getInappPurchaseHistory, getSubsPurchaseHistory]);
 
       return extractPurchased((results[0] ?? []) + (results[1] ?? []));
     } else if (_platform.isIOS) {
@@ -337,7 +343,8 @@ class FlutterInappPurchase {
   /// No effect on `iOS`, whose iap purchases are consumed at the time of purchase.
   Future<String?> acknowledgePurchaseAndroid(String token) async {
     if (_platform.isAndroid) {
-      return _channel.invokeMethod<String>('acknowledgePurchase', <String, dynamic>{'token': token});
+      return _channel.invokeMethod<String>(
+          'acknowledgePurchase', <String, dynamic>{'token': token});
     }
 
     throw _platformException;
@@ -397,27 +404,28 @@ class FlutterInappPurchase {
   /// Finish a transaction on both `android` and `iOS`.
   ///
   /// Call this after finalizing server-side validation of the reciept.
-  Future<PurchaseResult> finishTransaction(PurchasedItem purchasedItem, {bool isConsumable = false}) async {
+  Future<PurchaseError> finishTransaction(PurchasedItem purchasedItem,
+      {bool isConsumable = false}) async {
     if (_platform.isAndroid) {
       if (isConsumable) {
         final result = await _channel.invokeMapMethod(
           'consumeProduct',
           <String, dynamic>{'token': purchasedItem.purchaseToken},
         );
-        return PurchaseResult.fromJSON(Map<String, dynamic>.from(result ?? {}));
+        return PurchaseError.fromJSON(Map<String, dynamic>.from(result ?? {}));
       } else {
         final result = await _channel.invokeMapMethod(
           'acknowledgePurchase',
           <String, dynamic>{'token': purchasedItem.purchaseToken},
         );
-        return PurchaseResult.fromJSON(Map<String, dynamic>.from(result ?? {}));
+        return PurchaseError.fromJSON(Map<String, dynamic>.from(result ?? {}));
       }
     } else if (_platform.isIOS) {
       final result = await _channel.invokeMapMethod(
         'finishTransaction',
         <String, dynamic>{'transactionIdentifier': purchasedItem.transactionId},
       );
-      return PurchaseResult.fromJSON(Map<String, dynamic>.from(result ?? {}));
+      return PurchaseError.fromJSON(Map<String, dynamic>.from(result ?? {}));
     }
 
     throw _platformException;
@@ -436,9 +444,10 @@ class FlutterInappPurchase {
 
   /// Retrieves a list of products that have been attempted to purchase through the App Store `iOS` only.
   ///
-  Future<List<IAPItem>> getAppStoreInitiatedProducts() async {
+  Future<List<InAppPurchase>> getAppStoreInitiatedProducts() async {
     if (_platform.isIOS) {
-      final result = await _channel.invokeListMethod('getAppStoreInitiatedProducts');
+      final result =
+          await _channel.invokeListMethod('getAppStoreInitiatedProducts');
 
       return extractItems(result ?? []);
     }
@@ -460,8 +469,10 @@ class FlutterInappPurchase {
       final history = await getPurchaseHistory();
 
       for (final purchase in history) {
-        Duration difference = DateTime.now().difference(purchase.transactionDate);
-        if (difference.inMinutes <= (duration + grace).inMinutes && purchase.productId == sku) return true;
+        Duration difference =
+            DateTime.now().difference(purchase.transactionDate);
+        if (difference.inMinutes <= (duration + grace).inMinutes &&
+            purchase.productId == sku) return true;
       }
 
       return false;
@@ -493,7 +504,8 @@ class FlutterInappPurchase {
     required Map<String, String> receiptBody,
     bool isTest = true,
   }) async {
-    final String url = 'https://${isTest ? 'sandbox' : 'buy'}.itunes.apple.com/verifyReceipt';
+    final String url =
+        'https://${isTest ? 'sandbox' : 'buy'}.itunes.apple.com/verifyReceipt';
     return await http.post(
       Uri.parse(url),
       headers: {
@@ -544,20 +556,20 @@ class FlutterInappPurchase {
 
     _channel.setMethodCallHandler((MethodCall call) async {
       switch (call.method) {
-        case "purchase-updated":
+        case 'purchase-updated':
           final result = Map<String, dynamic>.from(call.arguments ?? {});
           _purchaseController!.add(PurchasedItem.fromJSON(result));
           break;
-        case "purchase-error":
+        case 'purchase-error':
           final result = Map<String, dynamic>.from(call.arguments ?? {});
-          _purchaseErrorController!.add(PurchaseResult.fromJSON(result));
+          _purchaseErrorController!.add(PurchaseError.fromJSON(result));
           break;
-        case "connection-updated":
+        case 'connection-updated':
           final result = Map<String, dynamic>.from(call.arguments ?? {});
           _connectionController!.add(ConnectionResult.fromJSON(result));
           break;
-        case "iap-promoted-product":
-          String? productId = call.arguments;
+        case 'iap-promoted-product':
+          final String? productId = call.arguments;
           if (productId != null && productId.isNotEmpty) {
             _purchasePromotedController!.add(productId);
           }

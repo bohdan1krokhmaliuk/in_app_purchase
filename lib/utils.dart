@@ -1,8 +1,9 @@
 import 'modules.dart';
 
-List<IAPItem> extractItems(List<dynamic> result) {
-  List<IAPItem> products = result
-      .map<IAPItem>((map) => IAPItem.fromJSON(Map<String, dynamic>.from(map)))
+List<InAppPurchase> extractItems(List<dynamic> result) {
+  List<InAppPurchase> products = result
+      .map<InAppPurchase>(
+          (map) => InAppPurchase.fromJSON(Map<String, dynamic>.from(map)))
       .toList();
 
   return products;
