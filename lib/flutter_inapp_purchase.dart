@@ -404,8 +404,10 @@ class FlutterInappPurchase {
   /// Finish a transaction on both `android` and `iOS`.
   ///
   /// Call this after finalizing server-side validation of the reciept.
-  Future<PurchaseError> finishTransaction(PurchasedItem purchasedItem,
-      {bool isConsumable = false}) async {
+  Future<PurchaseError> finishTransaction(
+    PurchasedItem purchasedItem, {
+    bool isConsumable = false,
+  }) async {
     if (_platform.isAndroid) {
       if (isConsumable) {
         final result = await _channel.invokeMapMethod(
@@ -425,6 +427,7 @@ class FlutterInappPurchase {
         'finishTransaction',
         <String, dynamic>{'transactionIdentifier': purchasedItem.transactionId},
       );
+
       return PurchaseError.fromJSON(Map<String, dynamic>.from(result ?? {}));
     }
 

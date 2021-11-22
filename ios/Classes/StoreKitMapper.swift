@@ -8,8 +8,17 @@
 import Foundation
 import StoreKit
 
-struct IAPConvertor {
-    static func convertSKPaymentTransaction(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?] {
+protocol StoreKitMapper {
+    func convertSKPaymentTransaction(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?]
+    
+    @available(iOS 12.2, *)
+    func convertDiscount(_ discount: SKProductDiscount) -> [String: Any?]
+    
+    func convertSKProduct(_ product: SKProduct) -> [String: Any?]
+}
+
+struct StoreKitMapperImpl : StoreKitMapper {
+    func convertSKPaymentTransaction(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?] {
         var date: NSNumber?
         var originalDate: NSNumber?
         
@@ -33,7 +42,7 @@ struct IAPConvertor {
         ]
     }
     
-    static func convertSKProduct(_ product: SKProduct) -> [String: Any?] {
+    func convertSKProduct(_ product: SKProduct) -> [String: Any?] {
         let formatter = NumberFormatter();
         formatter.numberStyle = .currency
         formatter.locale = product.priceLocale
@@ -71,7 +80,7 @@ struct IAPConvertor {
     }
     
     @available(iOS 12.2, *)
-    static func convertDiscount(_ discount: SKProductDiscount) -> [String: Any?]{
+    func convertDiscount(_ discount: SKProductDiscount) -> [String: Any?] {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = discount.priceLocale

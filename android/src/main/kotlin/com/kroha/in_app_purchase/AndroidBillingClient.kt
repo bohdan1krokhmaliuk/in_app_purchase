@@ -15,10 +15,6 @@ import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildSkuDetailsMap
 import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildBillingResultMap
 import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseHistoryRecordMap
 
-
-
-
-
 class AndroidBillingClient: MethodCallHandler, Application.ActivityLifecycleCallbacks {
     private lateinit var channel: MethodChannel
     private lateinit var applicationContext: Context

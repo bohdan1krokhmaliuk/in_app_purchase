@@ -5,57 +5,63 @@
 //  Created by Bohdan Krokhmaliuk on 19.11.2021.
 //
 
+// TODO: remove NSLogs
+
 import Foundation
 import StoreKit
 
 protocol InAppPurchasesService {
     func initConnection(result: @escaping FlutterResult)
     func endConnection(result: @escaping FlutterResult)
-    func fetchInAppPurchases(_ args: Any?, result: @escaping FlutterResult)
-    func buyProduct(_ args: Any?, result: @escaping FlutterResult)
-    func requestReceipt(_ args: Any?, result: @escaping FlutterResult)
-    func getPendingTransactions(_ args: Any?, result: @escaping FlutterResult)
-    func finishTransaction(_ args: Any?, result: @escaping FlutterResult)
-    func finishAllCompletedTransactions(_ args: Any?, result: @escaping FlutterResult)
-    func retrievePurchasedProducts(_ args: Any?, result: @escaping FlutterResult)
-    func getAppStoreInitiatedProducts(_ args: Any?, result: @escaping FlutterResult)
-    func dispose()
+    
+    func requestReceipt(result: @escaping FlutterResult)
+    func getPendingTransactions(result: @escaping FlutterResult)
+    func getCachedInAppPurchases(result: @escaping FlutterResult)
+    func getAppStoreInitiatedInAppPurchases(result: @escaping FlutterResult)
+    func finishAllCompletedTransactions(result: @escaping FlutterResult)
+    
+    func buyProduct(_ args: [String: Any?], result: @escaping FlutterResult)
+    func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult)
+    func fetchInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult)
+    func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult)
 }
 
-class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTransactionObserver, SKProductsRequestDelegate {
-    init(channel: FlutterMethodChannel) {
+class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
+    init (channel: FlutterMethodChannel) {
         self.channel = channel
+        self.mapper = StoreKitMapperImpl()
+        self.errorHandler = ErrorHandlerImpl()
+        self.receiptService = ReceiptServiceImpl()
     }
     
-    
+    private let mapper: StoreKitMapper
+    private let errorHandler: ErrorHandler
     private let channel: FlutterMethodChannel
-    private let receiptService: ReceiptService = ReceiptServiceImpl()
+    private let receiptService: ReceiptService
     
-    private var productsCache = [SKProduct]()
+    private var inAppPurchasesCache = [SKProduct]()
     private var appStoreInitiatedProducts = [SKProduct]()
     
-    
     private var restoreResult: FlutterResult?
-    private var refreshReceiptCallback: ((String?, FlutterError?) -> ())?
     private var fetchInAppPurchsesRequestResult = [SKProductsRequest: FlutterResult]()
     
+    private var queue: SKPaymentQueue {
+        return SKPaymentQueue.default()
+    }
+    
     func initConnection(result: @escaping FlutterResult) {
-        SKPaymentQueue.default().add(self)
+        queue.add(self)
         result(SKPaymentQueue.canMakePayments())
     }
     
     func endConnection(result: @escaping FlutterResult) {
-        SKPaymentQueue.default().remove(self)
-        result("Billing client ended")
+        queue.remove(self)
+        result(true)
     }
     
-    func fetchInAppPurchases(_ args: Any?, result: @escaping FlutterResult) {
-        guard let argsMap = args as? Dictionary<String, Any> else {
-            return buildFailedResult(result, "Invalid or missing arguments!")
-        }
-        
-        guard let identifiers = argsMap["skus"] as? Array<String> else {
-            return buildFailedResult(result, "Invalid or missing arguments!")
+    func fetchInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult) {
+        guard let identifiers = args["skus"] as? Array<String> else {
+            return result(errorHandler.buildError(ErrorCode.argumentError, "fetchInAppPurchases: 'skus' must be provided", nil))
         };
         
         let identifiersSet = Set(identifiers)
@@ -65,32 +71,27 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
         request.delegate = self
         request.start()
     }
+    
+    func getCachedInAppPurchases(result: @escaping FlutterResult) {
+        result(inAppPurchasesCache.map(mapper.convertSKProduct))
+    }
 
-    func buyProduct(_ args: Any?, result: @escaping FlutterResult) {
-        guard let argsMap = args as? [String: Any?] else {
-            return buildFailedResult(result, "Invalid or missing arguments!")
-        }
-        guard let identifier = argsMap["sku"] as? String else {
-            return buildFailedResult(result, "Invalid or missing identifier argument!")
-        };
-        let quantity = argsMap["quantity"] as? NSNumber
-        
-        guard let product = productsCache.first(where: {$0.productIdentifier == identifier}) else {
-            let error = [
-                "code": "E_DEVELOPER_ERROR",
-                "message": "Invalid product ID.",
-                "debugMessage":"Invalid product ID."
-            ]
-            return channel.invokeMethod("purchase-error", arguments: error)
+    func buyProduct(_ args: [String: Any?], result: @escaping FlutterResult) {
+        guard let identifier = args["sku"] as? String else {
+            return result(errorHandler.buildError(ErrorCode.argumentError,"buyProduct: 'sku' must be provided",nil))
         }
         
+        guard let product = inAppPurchasesCache.first(where: {$0.productIdentifier == identifier}) else {
+            return result(errorHandler.buildStandardError(ErrorCode.noSuchInAppPurchase))
+        }
+    
         let payment = SKMutablePayment(product: product)
-        payment.applicationUsername = argsMap["forUser"] as? String
-        payment.quantity = quantity?.intValue ?? 1
+        payment.applicationUsername = args["forUser"] as? String
+        payment.quantity = (args["quantity"] as? NSNumber)?.intValue ?? 1
         
         // Adds discount
         if #available(iOS 12.2, *) {
-            if let discountMap = argsMap["withOffer"] as? [String: Any?] {
+            if let discountMap = args["withOffer"] as? [String: Any?] {
                 let keyIdentifier = discountMap["keyIdentifier"] as? String
                 let offerIdentifier = discountMap["identifier"] as? String
                 let timeStamp = discountMap["timestamp"] as? NSNumber
@@ -111,76 +112,58 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
             }
         }
         
-        SKPaymentQueue.default().add(payment)
-        
+        queue.add(payment)
         result(nil)
     }
     
-    func requestReceipt(_ args: Any?, result: @escaping FlutterResult){
-        receiptService.requestReceiptData() { (receipt, error) -> () in
-            if receipt != nil{
-                return result(receipt)
-            }
-            else {
-                result(error)
-            }
-        }
+    func requestReceipt(result: @escaping FlutterResult) {
+        receiptService.requestReceiptData() {(receipt, error) -> () in result(receipt ?? error)}
     }
     
-    func getPendingTransactions(_ args: Any?, result: @escaping FlutterResult){
-        receiptService.requestReceiptData() { (receipt, error) -> () in
+    func getPendingTransactions(result: @escaping FlutterResult){
+        receiptService.requestReceiptData() {(receipt, error) -> () in
             if receipt != nil {
-                var transactionsDataArray = [[String: Any?]]()
-                for transaction in SKPaymentQueue.default().transactions {
-                    transactionsDataArray.append(IAPConvertor.convertSKPaymentTransaction(transaction, receipt!))
-                }
-                
-                return result(transactionsDataArray)
+                let transactionsMap = self.queue.transactions.map({self.mapper.convertSKPaymentTransaction($0, receipt!)})
+                return result(transactionsMap)
             }
-            else {
-                result(error)
-            }
+            
+            result(error)
         }
     }
     
-    /// Finishes all transaction with provided identifier
+    /// Finishes all transaction with provided transaction identifier or sku
     /// in case transaction is in .purchasing state - returns an error
     /// if transaction is finished returns success result
     /// if transaction is not in queue any more returns success result
-    func finishTransaction(_ args: Any?, result: @escaping FlutterResult){
-        guard let argsMap = args as? [String: Any?] else {
-            return buildFailedResult(result, "Invalid or missing arguments!")
-        }
-        guard let identifier = argsMap["transactionIdentifier"] as? String else {
-            return buildFailedResult(result, "Invalid or missing identifier argument!")
-        };
+    func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult){
+        let identifier = args["transactionIdentifier"] as? String
+        let sku = args["sku"] as? String
         
-        let queue = SKPaymentQueue.default()
-        for transaction in queue.transactions{
-            if transaction.transactionIdentifier == identifier {
+        if (sku == nil && identifier == nil) || (sku != nil && identifier != nil) {
+            return result(errorHandler.buildError(
+                ErrorCode.argumentError,
+                "finishTransaction: only 'sku' or only 'transactionIdentifier' must be provided",
+                nil
+            ))
+        }
+        
+        for transaction in queue.transactions {
+            if transaction.transactionIdentifier == identifier || transaction.payment.productIdentifier == sku {
                 if transaction.transactionState == .purchasing {
-                    return buildFailedResult(result, "Can finish purchasing transaction")
+                    return result(errorHandler.buildStandardError(ErrorCode.finishTransactionError))
                 }
                 
                 queue.finishTransaction(transaction)
             }
         }
         
-        // TODO: check if needed
-        let dict: [String: Any] = [
-            "debugMessage": "finishTransaction",
-            "message":"finished",
-            "code": identifier
-        ]
-        
-        result(dict)
+        result(true)
     }
     
     /// Finishes all transaction with not .purchasing state
-    func finishAllCompletedTransactions(_ args: Any?, result: @escaping FlutterResult){
-        let queue = SKPaymentQueue.default()
-        for transaction in queue.transactions{
-            if transaction.transactionState != .purchasing{
+    func finishAllCompletedTransactions(result: @escaping FlutterResult){
+        for transaction in queue.transactions {
+            if transaction.transactionState != .purchasing {
                 queue.finishTransaction(transaction)
             }
         }
@@ -194,95 +177,44 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
     /// failed: func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error);
     ///
     /// You can't make another request untill previos finished
-    func retrievePurchasedProducts(_ args: Any?, result: @escaping FlutterResult){
+    func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult){
         if restoreResult != nil {
-            return buildFailedResult(result, "Request already processing!")
-        }
-        guard let argsMap = args as? [String: Any?] else {
-            return buildFailedResult(result, "Invalid or missing arguments!")
+            return result(errorHandler.buildStandardError(ErrorCode.requestAlreadyProcessing))
         }
         
-        if let userHash = argsMap["forUser"] as? String {
-            SKPaymentQueue.default().restoreCompletedTransactions(withApplicationUsername: userHash)
-            restoreResult = result
-            return
+        if let userHash = args["forUser"] as? String {
+            queue.restoreCompletedTransactions(withApplicationUsername: userHash)
+        }
+        else {
+            queue.restoreCompletedTransactions()
         }
         
-        SKPaymentQueue.default().restoreCompletedTransactions()
         restoreResult = result
     }
     
-    func getAppStoreInitiatedProducts(_ args: Any?, result: @escaping FlutterResult){
-        var array = [[String: Any?]]()
-        
-        for product in appStoreInitiatedProducts {
-            array.append(IAPConvertor.convertSKProduct(product))
-        }
-        
-        result(array)
+    func getAppStoreInitiatedInAppPurchases(result: @escaping FlutterResult){
+        let products = appStoreInitiatedProducts.map(mapper.convertSKProduct)
+        result(products)
     }
     
-    private func buildFailedResult(_ result: @escaping FlutterResult, _ message: String, _ error: Error? = nil) {
-        return result(FlutterError(code: "in_app_purchase_failed", message: message, details: error?.localizedDescription))
+    deinit {
+        queue.remove(self)
     }
     
-    private func buildError(_ error: Error) -> FlutterError {
-        let nsError = error as NSError
-        return FlutterError(
-            code: standardErrorCode(nsError.code),
-            message: englishErrorCodeDescription( nsError.code),
-            details: nil
-        )
-    }
-    
-    // TODO: deinit?
-    func dispose() {
-        SKPaymentQueue.default().remove(self)
-    }
-    
-    
-    private func standardErrorCode(_ code: NSInteger) -> String {
-        let codes = [
-          "E_UNKNOWN",
-          "E_SERVICE_ERROR",
-          "E_USER_CANCELLED",
-          "E_USER_ERROR",
-          "E_USER_ERROR",
-          "E_ITEM_UNAVAILABLE",
-          "E_REMOTE_ERROR",
-          "E_NETWORK_ERROR",
-          "E_SERVICE_ERROR"
-        ];
-        
-        if code >= 0 && code < codes.count {
-            return codes[code]
-        }
-        
-        return codes[0]
-    }
-    
-    private func englishErrorCodeDescription(_ code: NSInteger) -> String{
-        let descriptions = [
-            "An unknown or unexpected error has occured. Please try again later.",
-            "Unable to process the transaction: your device is not allowed to make purchases.",
-            "Cancelled.",
-            "Oops! Payment information invalid. Did you enter your password correctly?",
-            "Payment is not allowed on this device. If you are the one authorized to make purchases on this device, you can turn payments on in Settings.",
-            "Sorry, but this product is currently not available in the store.",
-            "Unable to make purchase: Cloud service permission denied.",
-            "Unable to process transaction: Your internet connection isn't stable! Try again later.",
-            "Unable to process transaction: Cloud service revoked."
-        ];
-            
-        if code >= 0 && code < descriptions.count {
-            return descriptions[code]
-        }
-        else {
-            return String.localizedStringWithFormat("%@ (Error code: %d)", descriptions[0], code)
+}
+
+// MARK: - SKPaymentTransactionObserver
+extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
+    private func processPurchase(_ transaction: SKPaymentTransaction) {
+        appStoreInitiatedProducts.removeAll(where: {$0.productIdentifier == transaction.payment.productIdentifier})
+        receiptService.requestReceiptData() {(receipt, error) -> () in
+            if receipt != nil {
+                let transacition = self.mapper.convertSKPaymentTransaction(transaction, receipt!)
+                self.channel.invokeMethod("purchase-updated", arguments: transacition)
+            }
         }
     }
     
-    // MARK: - SKPaymentTransactionObserver
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
             switch transaction.transactionState {
@@ -298,14 +230,10 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
                     NSLog("Deferred (awaiting approval via parental controls, etc.)")
                 case .failed:
                     queue.finishTransaction(transaction)
-                    let nsError = transaction.error! as NSError
-                    let err = [
-                        "debugMessage" : "SKPaymentTransactionStateFailed",
-                        "code": standardErrorCode(nsError.code),
-                        "message": englishErrorCodeDescription(nsError.code)
-                    ]
+                    let error = transaction.error! as NSError
+                    let errorMap = errorHandler.buildSKErrorMap(error, "SKPaymentTransactionStateFailed")
                 
-                    self.channel.invokeMethod("purchase-error", arguments: err)
+                    self.channel.invokeMethod("purchase-error", arguments: errorMap)
                     NSLog("\n\n\n\n\n\n Purchase Failed  !! \n\n\n\n\n");
                 @unknown default:
                     NSLog("Runned into unknown transaction state")
@@ -313,42 +241,30 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
         }
     }
     
-    func processPurchase(_ transaction: SKPaymentTransaction) {
-        receiptService.requestReceiptData(){ (receipt, error) -> () in
-            if receipt != nil {
-                self.channel.invokeMethod(
-                    "purchase-updated", arguments: IAPConvertor.convertSKPaymentTransaction(transaction, receipt!)
-                )
-            }
-        }
-    }
-    
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         NSLog("\n\n\n  paymentQueueRestoreCompletedTransactionsFinished  \n\n.");
-        receiptService.requestReceiptData(){ (receipt, error) -> () in
-            if let result = self.restoreResult {
-                if error != nil {
-                    result(error)
-                }
-                else if receipt != nil {
-                    var transactionMaps = [[String: Any?]]()
-                    for transaction in queue.transactions {
-                        if transaction.transactionState == .restored || transaction.transactionState == .purchased {
-                            transactionMaps.append(IAPConvertor.convertSKPaymentTransaction(transaction, receipt!))
-                            queue.finishTransaction(transaction)
-                        }
+        receiptService.requestReceiptData() {(receipt, error) -> () in
+            if receipt != nil {
+                var transactionMaps = [[String: Any?]]()
+                for transaction in queue.transactions {
+                    if transaction.transactionState == .restored || transaction.transactionState == .purchased {
+                        transactionMaps.append(self.mapper.convertSKPaymentTransaction(transaction, receipt!))
+                        queue.finishTransaction(transaction)
                     }
                 }
+                self.restoreResult?(transactionMaps)
             }
+            else if error != nil {
+                self.restoreResult?(error)
+            }
+
             self.restoreResult = nil
         }
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
-        if restoreResult != nil {
-            restoreResult!(buildError(error))
-            restoreResult = nil
-        }
+        restoreResult?(errorHandler.buildSKError(error as NSError))
+        restoreResult = nil
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
@@ -356,39 +272,33 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService, SKPaymentTran
         channel.invokeMethod("iap-promoted-product", arguments: product.productIdentifier)
         return false
     }
-    
-    // MARK: - Store kit delegate
+}
+
+// MARK: - SKProductsRequestDelegate
+extension InAppPurchasesServiceImpl: SKProductsRequestDelegate {
     func request(_ request: SKRequest, didFailWithError error: Error) {
         if request is SKProductsRequest {
             let productRequest = request as! SKProductsRequest
             if let result = fetchInAppPurchsesRequestResult[productRequest] {
                 fetchInAppPurchsesRequestResult.removeValue(forKey: productRequest)
-                result(buildError(error))
+                result(errorHandler.buildSKError(error as NSError))
             }
         }
     }
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-        if let result = fetchInAppPurchsesRequestResult[request]{
+        if let result = fetchInAppPurchsesRequestResult[request] {
             fetchInAppPurchsesRequestResult.removeValue(forKey: request)
-            for product in response.products {
-                cacheProduct(product)
-            }
-            
-            var items = [[String: Any?]]()
-            for product in productsCache {
-                items.append(IAPConvertor.convertSKProduct(product))
-            }
+            response.products.forEach(cacheInAppPurchase)
             
             // TODO: APPEND response.invalidProductsIdentifiers? to result obj???
-            result(items)
+            result(inAppPurchasesCache.map(mapper.convertSKProduct))
         }
     }
     
-    
-    private func cacheProduct(_ product: SKProduct){
+    private func cacheInAppPurchase(_ product: SKProduct){
         NSLog("\n  Add new object : %@", product.productIdentifier);
-        productsCache.removeAll(where: {$0.productIdentifier == product.productIdentifier})
-        productsCache.append(product)
+        inAppPurchasesCache.removeAll(where: {$0.productIdentifier == product.productIdentifier})
+        inAppPurchasesCache.append(product)
     }
 }

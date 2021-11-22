@@ -22,9 +22,7 @@ object FlutterEntitiesBuilder {
         map["isAutoRenewing"] = purchase.isAutoRenewing
         map["isAcknowledged"] = purchase.isAcknowledged
         map["developerPayload"] = purchase.developerPayload
-
-
-
+        
         val identifiers = purchase.accountIdentifiers
         if (identifiers != null) {
             map["obfuscatedAccountId"] = identifiers.obfuscatedAccountId
