@@ -8,6 +8,7 @@ object FlutterEntitiesBuilder {
         val map = HashMap<String, Any?>()
 
         // part of PurchaseHistory object
+        map["sku"] = purchase.skus.first()
         map["skus"] = purchase.skus
         map["date"] = purchase.purchaseTime
         map["quantity"] = purchase.quantity
@@ -35,7 +36,8 @@ object FlutterEntitiesBuilder {
     fun buildPurchaseHistoryRecordMap(record: PurchaseHistoryRecord): HashMap<String, Any> {
         // TODO?
         val map = HashMap<String, Any>()
-        map["sku"] = record.sku
+        map["skus"] = record.skus
+        map["sku"] = record.skus.first()
         map["signatureAndroid"] = record.signature
         map["purchaseToken"] = record.purchaseToken
         map["transactionDate"] = record.purchaseTime

@@ -5,7 +5,7 @@
 //  Created by Bohdan Krokhmaliuk on 19.11.2021.
 //
 
-// TODO: remove NSLogs
+// TODO: Implement logger
 
 import Foundation
 import StoreKit
@@ -135,7 +135,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     /// in case transaction is in .purchasing state - returns an error
     /// if transaction is finished returns success result
     /// if transaction is not in queue any more returns success result
-    func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult){
+    func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult) {
         let identifier = args["transactionIdentifier"] as? String
         let sku = args["sku"] as? String
         
@@ -161,7 +161,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     }
     
     /// Finishes all transaction with not .purchasing state
-    func finishAllCompletedTransactions(result: @escaping FlutterResult){
+    func finishAllCompletedTransactions(result: @escaping FlutterResult) {
         for transaction in queue.transactions {
             if transaction.transactionState != .purchasing {
                 queue.finishTransaction(transaction)
@@ -177,7 +177,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     /// failed: func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error);
     ///
     /// You can't make another request untill previos finished
-    func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult){
+    func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult) {
         if restoreResult != nil {
             return result(errorHandler.buildStandardError(ErrorCode.requestAlreadyProcessing))
         }
@@ -192,7 +192,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         restoreResult = result
     }
     
-    func getAppStoreInitiatedInAppPurchases(result: @escaping FlutterResult){
+    func getAppStoreInitiatedInAppPurchases(result: @escaping FlutterResult) {
         let products = appStoreInitiatedProducts.map(mapper.convertSKProduct)
         result(products)
     }

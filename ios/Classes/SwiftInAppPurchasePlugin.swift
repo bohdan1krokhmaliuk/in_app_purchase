@@ -69,7 +69,6 @@ public class SwiftInAppPurchasePlugin: NSObject, FlutterPlugin {
             service?.fetchInAppPurchases(argsMap, result: result)
         case .retrievePurchasedProducts:
             service?.retrievePurchasedProducts(argsMap, result: result)
-        
         }
     }
     

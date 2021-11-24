@@ -9,7 +9,7 @@ enum ErrorCode: String {
     // SKError
     case unknown = "E_UNKNOWN"
     case clientInvalid = "E_CLIENT_INVALID"
-    case paymentCancelled = "E_PAYMENT_CANCELLED"
+    case paymentCancelled = "E_USER_CANCELLED"
     case paymentInvalid = "E_PAYMENT_INVALID"
     case paymentNotAllowed = "E_PAYMENT_NOT_ALLOWED"
     case storeProductNotAvailable = "E_STORE_PRODUCT_NOT_AVAILABLE"
