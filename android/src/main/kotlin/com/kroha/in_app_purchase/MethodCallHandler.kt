@@ -4,12 +4,11 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
-import com.android.billingclient.api.*
+import com.android.billingclient.api.BillingClient.*
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel.*
 import io.flutter.plugin.common.MethodChannel
 
-import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildBillingResultMap
 import com.kroha.in_app_purchase.billingClientService.BillingClientService
 import com.kroha.in_app_purchase.billingClientService.BillingClientServiceFactory
 
@@ -21,7 +20,6 @@ class MethodCallHandler(
 {
     private var activity: Activity? = null
     private var service: BillingClientService? = null
-
 
     companion object {
         private const val initConnection = "initConnection"
@@ -59,23 +57,27 @@ class MethodCallHandler(
             consumeAllItems -> service?.consumeAllItems(result)
             getItemsByType -> {
                 val type: String? = call.argument("type")
-                val skuList: ArrayList<String>? = call.argument("skus")
-
-                if(type == null || skuList == null) {
-                    return result.error(call.method, "E_WRONG_PARAMS", "type and skuList must be NonNullable for method")
+                if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
+                    return result.error(call.method, "E_WRONG_PARAMS", "type var must be one of next values: [subs, inapp]")
                 }
+                val skuList: ArrayList<String> = call.argument("skus")
+                    ?: return result.error(call.method, "E_WRONG_PARAMS", "type and skuList must be NonNullable for method")
 
                 service?.getInAppPurchasesByType(result, skuList, type)
             }
             getAvailableItemsByType -> {
-                val type: String = call.argument("type")
-                    ?: return result.error(call.method, "E_WRONG_PARAMS", "type must be NonNullable for method")
+                val type: String? = call.argument("type")
+                if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
+                    return result.error(call.method, "E_WRONG_PARAMS", "type var must be one of next values: [subs, inapp]")
+                }
 
                 service?.getPurchasedProductsByType(result,type)
             }
             getPurchaseHistoryByType -> {
-                val type: String = call.argument("type")
-                    ?: return result.error(call.method, "E_WRONG_PARAMS", "type must be NonNullable for method")
+                val type: String? = call.argument("type")
+                if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
+                    return result.error(call.method, "E_WRONG_PARAMS", "type var must be one of next values: [subs, inapp]")
+                }
 
                 service?.getPurchaseHistoryByType(result,type)
             }
@@ -87,7 +89,7 @@ class MethodCallHandler(
                 if (sku == null) {
                     return result.error(call.method, "E_WRONG_PARAMS", "type and sku must be NonNullable for method")
                 } else if (activity == null){
-                    return result.error(call.method, "E_ACTIVITY_UNAVAILABLE", "Purhcase can not be requested as activity not available")
+                    return result.error(call.method, "E_ACTIVITY_UNAVAILABLE", "Purchase can not be requested as activity not available")
                 }
 
                 service?.buyItem(result, activity!!, sku, obfuscatedAccountId, obfuscatedProfileId)
@@ -105,7 +107,7 @@ class MethodCallHandler(
                     val debugMessage = "'oldSkuPurchaseToken' must be specified"
                     return result.error(call.method, "updateSubscription", debugMessage)
                 } else if (activity == null){
-                    return result.error(call.method, "E_ACTIVITY_UNAVAILABLE", "Purhcase can not be requested as activity not available")
+                    return result.error(call.method, "E_ACTIVITY_UNAVAILABLE", "Purchase can not be requested as activity not available")
                 }
 
 

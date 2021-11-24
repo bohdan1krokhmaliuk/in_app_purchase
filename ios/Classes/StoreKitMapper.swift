@@ -9,16 +9,16 @@ import Foundation
 import StoreKit
 
 protocol StoreKitMapper {
-    func convertSKPaymentTransaction(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?]
+    func toJson(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?]
     
     @available(iOS 12.2, *)
-    func convertDiscount(_ discount: SKProductDiscount) -> [String: Any?]
+    func toJson(_ discount: SKProductDiscount) -> [String: Any?]
     
-    func convertSKProduct(_ product: SKProduct) -> [String: Any?]
+    func toJson(_ product: SKProduct) -> [String: Any?]
 }
 
 struct StoreKitMapperImpl : StoreKitMapper {
-    func convertSKPaymentTransaction(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?] {
+    func toJson(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?] {
         var date: NSNumber?
         var originalDate: NSNumber?
         
@@ -42,7 +42,7 @@ struct StoreKitMapperImpl : StoreKitMapper {
         ]
     }
     
-    func convertSKProduct(_ product: SKProduct) -> [String: Any?] {
+    func toJson(_ product: SKProduct) -> [String: Any?] {
         let formatter = NumberFormatter();
         formatter.numberStyle = .currency
         formatter.locale = product.priceLocale
@@ -55,11 +55,11 @@ struct StoreKitMapperImpl : StoreKitMapper {
         var introductoryDiscount: [String: Any?]?
         if #available(iOS 12.2, *){
             if let introductory = product.introductoryPrice{
-                introductoryDiscount = convertDiscount(introductory)
+                introductoryDiscount = toJson(introductory)
             }
             periodNumberIOS = product.subscriptionPeriod?.numberOfUnits
             periodUnitIOS = product.subscriptionPeriod?.unit.rawValue
-            discounts = product.discounts.map({return convertDiscount($0)})
+            discounts = product.discounts.map({return toJson($0)})
             subscriptionGroupId = product.subscriptionGroupIdentifier
         }
         
@@ -80,7 +80,7 @@ struct StoreKitMapperImpl : StoreKitMapper {
     }
     
     @available(iOS 12.2, *)
-    func convertDiscount(_ discount: SKProductDiscount) -> [String: Any?] {
+    func toJson(_ discount: SKProductDiscount) -> [String: Any?] {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = discount.priceLocale

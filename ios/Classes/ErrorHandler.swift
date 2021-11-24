@@ -116,8 +116,9 @@ extension ErrorCode {
 
 protocol ErrorHandler {
     func buildError(_ code: ErrorCode, _ message: String?, _ details: Any?) -> FlutterError
-    func buildStandardError(_ code: ErrorCode) -> FlutterError
     func buildSKError(_ error: NSError) -> FlutterError
+    func buildStandardError(_ code: ErrorCode) -> FlutterError
+    func buildArgumentError(_ message: String) -> FlutterError
     
     func buildSKErrorMap(_ error: NSError, _ debugMessage: String?) -> [String: String?]
     func buildErrorMap(_ code: String, _ message: String, _ debugMessage: String?) -> [String: String?]
@@ -128,8 +129,12 @@ struct ErrorHandlerImpl: ErrorHandler {
         return FlutterError(code: code.rawValue, message: message, details: details)
     }
     
-    func buildStandardError(_ code: ErrorCode) -> FlutterError{
+    func buildStandardError(_ code: ErrorCode) -> FlutterError {
         return buildError(code, code.defaultMessage, nil)
+    }
+    
+    func buildArgumentError(_ message: String) -> FlutterError {
+        return buildError(ErrorCode.argumentError, message, nil)
     }
     
     func buildSKError(_ error: NSError) -> FlutterError {

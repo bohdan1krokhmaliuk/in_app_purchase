@@ -2,7 +2,7 @@ package com.kroha.in_app_purchase.billingClientService
 
 import android.content.Context
 import com.android.billingclient.api.BillingClient
-import com.kroha.in_app_purchase.PurchasesUpdatedListenerImpl
+import com.kroha.in_app_purchase.mapper.BillingClientMapperImpl
 import io.flutter.plugin.common.MethodChannel
 
 class BillingClientServiceFactory {
@@ -11,10 +11,13 @@ class BillingClientServiceFactory {
         channel: MethodChannel,
         enablePendingPurchases: Boolean
     ): BillingClientService {
+        val mapper = BillingClientMapperImpl()
+        val listener = PurchasesUpdatedListenerImpl(channel, mapper)
+
         val builder = BillingClient.newBuilder(context)
         if (enablePendingPurchases) builder.enablePendingPurchases()
-        val billingClient = builder.setListener(PurchasesUpdatedListenerImpl(channel)).build()
+        val billingClient = builder.setListener(listener).build()
 
-        return BillingClientServiceImpl(billingClient, channel)
+        return BillingClientServiceImpl(billingClient, channel, mapper)
     }
 }

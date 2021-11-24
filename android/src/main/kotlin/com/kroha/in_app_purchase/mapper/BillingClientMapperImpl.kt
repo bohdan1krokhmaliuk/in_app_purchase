@@ -1,10 +1,11 @@
-package com.kroha.in_app_purchase
+package com.kroha.in_app_purchase.mapper
 
 import com.android.billingclient.api.*
+import com.kroha.in_app_purchase.ErrorUtils
 import java.util.HashMap
 
-object FlutterEntitiesBuilder {
-    fun buildPurchaseMap(purchase: Purchase): HashMap<String, Any?> {
+class BillingClientMapperImpl : BillingClientMapper {
+    override fun toJson(purchase: Purchase): HashMap<String, Any?> {
         val map = HashMap<String, Any?>()
 
         // part of PurchaseHistory object
@@ -15,6 +16,7 @@ object FlutterEntitiesBuilder {
         map["signature"] = purchase.signature
         map["receipt"] = purchase.originalJson
         map["purchaseToken"] = purchase.purchaseToken
+        map["developerPayload"] = purchase.developerPayload
 
         // additional fields for purchase
         map["transactionId"] = purchase.orderId
@@ -22,8 +24,7 @@ object FlutterEntitiesBuilder {
         map["purchaseState"] = purchase.purchaseState
         map["isAutoRenewing"] = purchase.isAutoRenewing
         map["isAcknowledged"] = purchase.isAcknowledged
-        map["developerPayload"] = purchase.developerPayload
-        
+
         val identifiers = purchase.accountIdentifiers
         if (identifiers != null) {
             map["obfuscatedAccountId"] = identifiers.obfuscatedAccountId
@@ -33,19 +34,22 @@ object FlutterEntitiesBuilder {
         return map
     }
 
-    fun buildPurchaseHistoryRecordMap(record: PurchaseHistoryRecord): HashMap<String, Any> {
-        // TODO?
+    override fun toJson(record: PurchaseHistoryRecord): HashMap<String, Any> {
         val map = HashMap<String, Any>()
+
         map["skus"] = record.skus
         map["sku"] = record.skus.first()
+        map["quantity"] = record.quantity
         map["signatureAndroid"] = record.signature
         map["purchaseToken"] = record.purchaseToken
         map["transactionDate"] = record.purchaseTime
         map["transactionReceipt"] = record.originalJson
+        map["developerPayload"] = record.developerPayload
+
         return map
     }
 
-    fun buildSkuDetailsMap(skuDetails: SkuDetails): HashMap<String, Any> {
+    override fun toJson(skuDetails: SkuDetails): HashMap<String, Any> {
         val map = HashMap<String, Any>()
 
         map["sku"] = skuDetails.sku
@@ -66,23 +70,23 @@ object FlutterEntitiesBuilder {
             map["introductoryDiscount"] = discountMap
         }
 
-        map["freeTrial"] = skuDetails.freeTrialPeriod
+        map["type"] = skuDetails.type
         map["iconUrl"] = skuDetails.iconUrl
+        map["freeTrial"] = skuDetails.freeTrialPeriod
         map["originalLocalizedPrice"] = skuDetails.originalPrice
         map["originalPrice"] = skuDetails.originalPriceAmountMicros / 1000000f
 
-        // TODO: kill if not needed
-        map["type"] = skuDetails.type
 
         return map
     }
 
-    fun buildBillingResultMap(billingResult: BillingResult): HashMap<String, Any> {
+    override fun toJson(billingResult: BillingResult): HashMap<String, Any> {
+        billingResult.debugMessage
         val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
         return buildBillingResultMap(billingResult, errorData[0], errorData[1])
     }
 
-    fun buildBillingResultMap(
+    private fun buildBillingResultMap(
         billingResult: BillingResult,
         errorCode: String,
         message: String

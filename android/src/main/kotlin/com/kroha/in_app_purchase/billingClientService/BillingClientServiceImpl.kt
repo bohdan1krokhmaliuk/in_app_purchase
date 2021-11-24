@@ -4,15 +4,14 @@ import android.app.Activity
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.*
 import com.kroha.in_app_purchase.ErrorUtils
-import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseHistoryRecordMap
-import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildPurchaseMap
-import com.kroha.in_app_purchase.FlutterEntitiesBuilder.buildSkuDetailsMap
+import com.kroha.in_app_purchase.mapper.BillingClientMapper
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.*
 
 class BillingClientServiceImpl(
     private val client: BillingClient,
-    private val channel: MethodChannel
+    private val channel: MethodChannel,
+    private val mapper: BillingClientMapper
 ): BillingClientService {
     private val cachedSkuDetails = ArrayList<SkuDetails>()
     override val isReady: Boolean
@@ -47,14 +46,16 @@ class BillingClientServiceImpl(
     }
 
     override fun consumeAllItems(result: Result) {
-        client.queryPurchasesAsync(SkuType.INAPP) { response, purchases ->
-            if (response.responseCode != BillingResponseCode.OK) {
-                val resultMap = ErrorUtils.getBillingResponseData(response.responseCode)
-                return@queryPurchasesAsync result.error(resultMap[0], resultMap[1], response.debugMessage)
+        client.queryPurchasesAsync(SkuType.INAPP) { billingResult, purchases ->
+            if (billingResult.responseCode != BillingResponseCode.OK) {
+                val resultMap = ErrorUtils.getBillingResponseData(billingResult.responseCode)
+                result.error(resultMap[0], resultMap[1], billingResult.debugMessage)
+                return@queryPurchasesAsync
             }
 
             if (purchases.isEmpty()) {
-                return@queryPurchasesAsync result.error("consumeAllItems", "refreshItem", "No purchases found")
+                result.error("consumeAllItems", "refreshItem", "No purchases found")
+                return@queryPurchasesAsync
             }
 
             val array: ArrayList<String> = ArrayList()
@@ -71,38 +72,38 @@ class BillingClientServiceImpl(
         }
     }
 
-    // TODO: conform String to SkuType
     override fun getInAppPurchasesByType(result: Result, skuList: ArrayList<String>, type: String) {
         val params = SkuDetailsParams.newBuilder().setSkusList(skuList).setType(type).build()
-        client.querySkuDetailsAsync(params) { response, details ->
-            if (response.responseCode != BillingResponseCode.OK) {
-                val errorData = ErrorUtils.getBillingResponseData(response.responseCode)
-                return@querySkuDetailsAsync result.error("getItemsByType", errorData[0], errorData[1])
+        client.querySkuDetailsAsync(params) { billingResult, details ->
+            if (billingResult.responseCode != BillingResponseCode.OK) {
+                val errorData = ErrorUtils.getBillingResponseData(billingResult.responseCode)
+                result.error("getItemsByType", errorData[0], errorData[1])
+                return@querySkuDetailsAsync
             }
 
-            // TODO: check for null
-            details!!.forEach {
+            details?.forEach {
                 cachedSkuDetails.removeAll { d -> d.sku == it.sku }
                 cachedSkuDetails.add(it)
             }
 
-            result.success(details.map { skuDetails -> buildSkuDetailsMap(skuDetails)})
+            val maps = details?.map { d -> mapper.toJson(d) } ?: HashMap<String,Any>()
+            result.success(maps)
         }
     }
 
-    // TODO: conform String to SkuType
     override fun getPurchasedProductsByType(result: Result, type: String) {
         client.queryPurchasesAsync(type) { billingResult, purchases ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
                 val resultMap = ErrorUtils.getBillingResponseData(billingResult.responseCode)
                 result.error(resultMap[0], resultMap[1], billingResult.debugMessage)
+                return@queryPurchasesAsync
             }
 
-            result.success( purchases.map { p -> buildPurchaseMap(p) } )
+            val maps = purchases.map { p -> mapper.toJson(p) }
+            result.success(maps)
         }
     }
 
-    // TODO: conform String to SkuType
     override fun getPurchaseHistoryByType(result: Result, type: String) {
         client.queryPurchaseHistoryAsync(type)  { billingResult, historyRecords ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
@@ -111,8 +112,8 @@ class BillingClientServiceImpl(
                 return@queryPurchaseHistoryAsync
             }
 
-            // TODO: check for null
-            result.success( historyRecords!!.map { h -> buildPurchaseHistoryRecordMap(h) } )
+            val maps = historyRecords?.map { h -> mapper.toJson(h) } ?: HashMap<String,Any>()
+            result.success(maps)
         }
     }
 
@@ -125,9 +126,10 @@ class BillingClientServiceImpl(
             if (billingResult.responseCode != BillingResponseCode.OK) {
                 val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
                 result.error("acknowledgePurchase", errorData[0], errorData[1])
-            } else {
-                result.success(true)
+                return@acknowledgePurchase
             }
+
+            result.success(true)
         }
     }
 
@@ -140,9 +142,10 @@ class BillingClientServiceImpl(
             if (billingResult.responseCode != BillingResponseCode.OK) {
                 val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
                 result.error("consumeProduct", errorData[0], errorData[1])
-            } else {
-                result.success(outToken)
+                return@consumeAsync
             }
+
+            result.success(outToken)
         }
     }
 

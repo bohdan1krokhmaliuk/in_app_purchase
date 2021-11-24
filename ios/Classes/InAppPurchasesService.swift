@@ -61,7 +61,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     
     func fetchInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult) {
         guard let identifiers = args["skus"] as? Array<String> else {
-            return result(errorHandler.buildError(ErrorCode.argumentError, "fetchInAppPurchases: 'skus' must be provided", nil))
+            return result(errorHandler.buildArgumentError("fetchInAppPurchases: 'skus' must be provided"))
         };
         
         let identifiersSet = Set(identifiers)
@@ -73,12 +73,12 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     }
     
     func getCachedInAppPurchases(result: @escaping FlutterResult) {
-        result(inAppPurchasesCache.map(mapper.convertSKProduct))
+        result(inAppPurchasesCache.map(mapper.toJson))
     }
 
     func buyProduct(_ args: [String: Any?], result: @escaping FlutterResult) {
         guard let identifier = args["sku"] as? String else {
-            return result(errorHandler.buildError(ErrorCode.argumentError,"buyProduct: 'sku' must be provided",nil))
+            return result(errorHandler.buildArgumentError("buyProduct: 'sku' must be provided"))
         }
         
         guard let product = inAppPurchasesCache.first(where: {$0.productIdentifier == identifier}) else {
@@ -123,7 +123,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     func getPendingTransactions(result: @escaping FlutterResult){
         receiptService.requestReceiptData() {(receipt, error) -> () in
             if receipt != nil {
-                let transactionsMap = self.queue.transactions.map({self.mapper.convertSKPaymentTransaction($0, receipt!)})
+                let transactionsMap = self.queue.transactions.map({self.mapper.toJson($0, receipt!)})
                 return result(transactionsMap)
             }
             
@@ -140,10 +140,8 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         let sku = args["sku"] as? String
         
         if (sku == nil && identifier == nil) || (sku != nil && identifier != nil) {
-            return result(errorHandler.buildError(
-                ErrorCode.argumentError,
-                "finishTransaction: only 'sku' or only 'transactionIdentifier' must be provided",
-                nil
+            return result(errorHandler.buildArgumentError(
+                "finishTransaction: only 'sku' or only 'transactionIdentifier' must be provided"
             ))
         }
         
@@ -193,14 +191,13 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     }
     
     func getAppStoreInitiatedInAppPurchases(result: @escaping FlutterResult) {
-        let products = appStoreInitiatedProducts.map(mapper.convertSKProduct)
+        let products = appStoreInitiatedProducts.map(mapper.toJson)
         result(products)
     }
     
     deinit {
         queue.remove(self)
     }
-    
 }
 
 // MARK: - SKPaymentTransactionObserver
@@ -209,7 +206,7 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
         appStoreInitiatedProducts.removeAll(where: {$0.productIdentifier == transaction.payment.productIdentifier})
         receiptService.requestReceiptData() {(receipt, error) -> () in
             if receipt != nil {
-                let transacition = self.mapper.convertSKPaymentTransaction(transaction, receipt!)
+                let transacition = self.mapper.toJson(transaction, receipt!)
                 self.channel.invokeMethod("purchase-updated", arguments: transacition)
             }
         }
@@ -225,7 +222,6 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
                     processPurchase(transaction)
                 case .restored:
                     NSLog("Restored")
-                    queue.finishTransaction(transaction)
                 case .deferred:
                     NSLog("Deferred (awaiting approval via parental controls, etc.)")
                 case .failed:
@@ -241,14 +237,20 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
         }
     }
     
+    func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
+        appStoreInitiatedProducts.append(product)
+        channel.invokeMethod("iap-promoted-product", arguments: product.productIdentifier)
+        return false
+    }
+    
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         NSLog("\n\n\n  paymentQueueRestoreCompletedTransactionsFinished  \n\n.");
         receiptService.requestReceiptData() {(receipt, error) -> () in
             if receipt != nil {
                 var transactionMaps = [[String: Any?]]()
                 for transaction in queue.transactions {
-                    if transaction.transactionState == .restored || transaction.transactionState == .purchased {
-                        transactionMaps.append(self.mapper.convertSKPaymentTransaction(transaction, receipt!))
+                    if transaction.transactionState == .restored {
+                        transactionMaps.append(self.mapper.toJson(transaction, receipt!))
                         queue.finishTransaction(transaction)
                     }
                 }
@@ -265,12 +267,6 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
         restoreResult?(errorHandler.buildSKError(error as NSError))
         restoreResult = nil
-    }
-    
-    func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
-        appStoreInitiatedProducts.append(product)
-        channel.invokeMethod("iap-promoted-product", arguments: product.productIdentifier)
-        return false
     }
 }
 
@@ -292,7 +288,7 @@ extension InAppPurchasesServiceImpl: SKProductsRequestDelegate {
             response.products.forEach(cacheInAppPurchase)
             
             // TODO: APPEND response.invalidProductsIdentifiers? to result obj???
-            result(inAppPurchasesCache.map(mapper.convertSKProduct))
+            result(inAppPurchasesCache.map(mapper.toJson))
         }
     }
     
