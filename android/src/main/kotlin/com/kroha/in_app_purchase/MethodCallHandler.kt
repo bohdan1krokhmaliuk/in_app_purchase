@@ -11,11 +11,14 @@ import io.flutter.plugin.common.MethodChannel
 
 import com.kroha.in_app_purchase.billingClientService.BillingClientService
 import com.kroha.in_app_purchase.billingClientService.BillingClientServiceFactory
+import com.kroha.in_app_purchase.errorHandler.ErrorHandler
+import com.kroha.in_app_purchase.errorHandler.PurchaseError
 
 class MethodCallHandler(
-        private val channel: MethodChannel,
-        private val applicationContext: Context,
-        private val billingServiceFactory: BillingClientServiceFactory
+    private val channel: MethodChannel,
+    private val errorHandler: ErrorHandler,
+    private val applicationContext: Context,
+    private val billingServiceFactory: BillingClientServiceFactory
         ): MethodChannel.MethodCallHandler, Application.ActivityLifecycleCallbacks
 {
     private var activity: Activity? = null
@@ -32,6 +35,14 @@ class MethodCallHandler(
         private const val updateSubscription = "updateSubscription"
         private const val acknowledgePurchase = "acknowledgePurchase"
         private const val consumeProduct = "consumeProduct"
+
+
+        private const val skuInvalidErr ="Sku must be non nullable"
+        private const val skusInvalidErr = "Skus must be non nullable"
+        private const val tokenInvalidErr = "Token must be non nullable"
+        private const val oldTokenInvalidErr = "'oldSkuPurchaseToken' must be specified"
+        private const val typeInvalidErr = "Type var must be one of next values: [subs, inapp]"
+        private const val pendingPurchasesErr = "Please specify if service should enable pending purchases"
     }
 
     fun setActivity(activity: Activity?) {
@@ -42,15 +53,15 @@ class MethodCallHandler(
         val isServiceInitialized = service?.isReady ?: false
 
         if (call.method != initConnection && !isServiceInitialized) {
-            val message = "IAP not prepared. Check if Google Play service is available."
-            return result.error("serviceNotInitialized", message, "")
+            return errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_SERVICE_NOT_READY)
         }
 
         when (call.method) {
             initConnection -> {
                 val enablePendingPurchases: Boolean = call.argument("enablePendingPurchases")
-                    ?: return result.error(call.method, "E_WRONG_PARAMS", "type and skuList must be NonNullable for method")
-                service = billingServiceFactory.createBillingClient(applicationContext, channel, enablePendingPurchases)
+                    ?: return errorHandler.submitArgsErrorResult(result, pendingPurchasesErr)
+
+                service = billingServiceFactory.createBillingClient(applicationContext, channel, errorHandler, enablePendingPurchases)
                 service?.initConnection(result)
             }
             endConnection -> service?.endConnection(result)
@@ -58,28 +69,29 @@ class MethodCallHandler(
             getItemsByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
-                    return result.error(call.method, "E_WRONG_PARAMS", "type var must be one of next values: [subs, inapp]")
+                    return errorHandler.submitArgsErrorResult(result, typeInvalidErr)
                 }
                 val skuList: ArrayList<String> = call.argument("skus")
-                    ?: return result.error(call.method, "E_WRONG_PARAMS", "type and skuList must be NonNullable for method")
+                    ?: return errorHandler.submitArgsErrorResult(result, skusInvalidErr)
+
 
                 service?.getInAppPurchasesByType(result, skuList, type)
             }
             getAvailableItemsByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
-                    return result.error(call.method, "E_WRONG_PARAMS", "type var must be one of next values: [subs, inapp]")
+                    return errorHandler.submitArgsErrorResult(result, typeInvalidErr)
                 }
 
-                service?.getPurchasedProductsByType(result,type)
+                service?.getPurchasedProductsByType(result, type)
             }
             getPurchaseHistoryByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
-                    return result.error(call.method, "E_WRONG_PARAMS", "type var must be one of next values: [subs, inapp]")
+                    return errorHandler.submitArgsErrorResult(result, typeInvalidErr)
                 }
 
-                service?.getPurchaseHistoryByType(result,type)
+                service?.getPurchaseHistoryByType(result, type)
             }
             buyItemByType -> {
                 val sku: String? = call.argument("sku")
@@ -87,9 +99,9 @@ class MethodCallHandler(
                 val obfuscatedProfileId: String? = call.argument("obfuscatedProfileId")
 
                 if (sku == null) {
-                    return result.error(call.method, "E_WRONG_PARAMS", "type and sku must be NonNullable for method")
+                    return errorHandler.submitArgsErrorResult(result, skuInvalidErr)
                 } else if (activity == null){
-                    return result.error(call.method, "E_ACTIVITY_UNAVAILABLE", "Purchase can not be requested as activity not available")
+                    return errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_ACTIVITY_UNAVAILABLE)
                 }
 
                 service?.buyItem(result, activity!!, sku, obfuscatedAccountId, obfuscatedProfileId)
@@ -102,12 +114,11 @@ class MethodCallHandler(
                 val oldSkuPurchaseToken: String? = call.argument("purchaseToken")
 
                 if (newSubscriptionSku == null) {
-                    return result.error(call.method, "E_WRONG_PARAMS", "type and sku must be NonNullable for method")
+                    return errorHandler.submitArgsErrorResult(result, skuInvalidErr)
                 } else if (oldSkuPurchaseToken == null || oldSkuPurchaseToken.isEmpty()){
-                    val debugMessage = "'oldSkuPurchaseToken' must be specified"
-                    return result.error(call.method, "updateSubscription", debugMessage)
+                    return errorHandler.submitArgsErrorResult(result, oldTokenInvalidErr)
                 } else if (activity == null){
-                    return result.error(call.method, "E_ACTIVITY_UNAVAILABLE", "Purchase can not be requested as activity not available")
+                    return errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_ACTIVITY_UNAVAILABLE)
                 }
 
 
@@ -123,13 +134,13 @@ class MethodCallHandler(
             }
             acknowledgePurchase -> {
                 val token: String = call.argument("token")
-                    ?: return result.error(call.method, "E_WRONG_PARAMS", "token must be NonNullable for method")
+                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidErr)
 
                 service?.acknowledgePurchase(result, token)
             }
             consumeProduct -> {
                 val token: String = call.argument("token")
-                    ?: return result.error(call.method, "E_WRONG_PARAMS", "token must be NonNullable for method")
+                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidErr)
 
                 service?.consumeProduct(result, token)
             }
@@ -150,7 +161,7 @@ class MethodCallHandler(
     override fun onActivityStopped(activity: Activity) {}
 
     override fun onActivityDestroyed(activity: Activity) {
-        if (this.activity == activity && applicationContext != null) {
+        if (this.activity == activity) {
             (applicationContext as Application).unregisterActivityLifecycleCallbacks(this)
             onDetachedFromActivity()
         }

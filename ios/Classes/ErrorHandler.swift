@@ -5,7 +5,7 @@
 //  Created by Bohdan Krokhmaliuk on 22.11.2021.
 //
 
-enum ErrorCode: String {
+enum PurchaseError: String {
     // SKError
     case unknown = "E_UNKNOWN"
     case clientInvalid = "E_CLIENT_INVALID"
@@ -37,7 +37,7 @@ enum ErrorCode: String {
     case noSuchInAppPurchase = "E_IN_APP_PURCHASE_MISSING"
 }
 
-extension ErrorCode {
+extension PurchaseError {
     var defaultMessage: String {
         switch self {
         case .unknown:
@@ -87,7 +87,7 @@ extension ErrorCode {
         }
     }
     
-    static var SKErrorArray: [ErrorCode] {
+    static var SKErrorArray: [PurchaseError] {
         return [
             .unknown,
             .clientInvalid,
@@ -115,9 +115,9 @@ extension ErrorCode {
 }
 
 protocol ErrorHandler {
-    func buildError(_ code: ErrorCode, _ message: String?, _ details: Any?) -> FlutterError
+    func buildFlutterError(_ code: PurchaseError, _ message: String?, _ details: Any?) -> FlutterError
     func buildSKError(_ error: NSError) -> FlutterError
-    func buildStandardError(_ code: ErrorCode) -> FlutterError
+    func buildStandardFlutterError(_ code: PurchaseError) -> FlutterError
     func buildArgumentError(_ message: String) -> FlutterError
     
     func buildSKErrorMap(_ error: NSError, _ debugMessage: String?) -> [String: String?]
@@ -125,16 +125,16 @@ protocol ErrorHandler {
 }
 
 struct ErrorHandlerImpl: ErrorHandler {
-    func buildError(_ code: ErrorCode, _ message: String?, _ details: Any?) -> FlutterError {
-        return FlutterError(code: code.rawValue, message: message, details: details)
+    func buildFlutterError(_ error: PurchaseError, _ message: String?, _ details: Any?) -> FlutterError {
+        return FlutterError(code: error.rawValue, message: message, details: details)
     }
     
-    func buildStandardError(_ code: ErrorCode) -> FlutterError {
-        return buildError(code, code.defaultMessage, nil)
+    func buildStandardFlutterError(_ error: PurchaseError) -> FlutterError {
+        return buildFlutterError(error, error.defaultMessage, nil)
     }
     
     func buildArgumentError(_ message: String) -> FlutterError {
-        return buildError(ErrorCode.argumentError, message, nil)
+        return buildFlutterError(PurchaseError.argumentError, message, nil)
     }
     
     func buildSKError(_ error: NSError) -> FlutterError {
@@ -159,11 +159,11 @@ struct ErrorHandlerImpl: ErrorHandler {
         ]
     }
     
-    private func buildSkError(_ code: Int) -> ErrorCode {
-        if code >= 0 && code < ErrorCode.SKErrorArray.count {
-            return ErrorCode.SKErrorArray[code]
+    private func buildSkError(_ code: Int) -> PurchaseError {
+        if code >= 0 && code < PurchaseError.SKErrorArray.count {
+            return PurchaseError.SKErrorArray[code]
         }
         
-        return ErrorCode.SKErrorArray[0]
+        return PurchaseError.SKErrorArray[0]
     }
 }

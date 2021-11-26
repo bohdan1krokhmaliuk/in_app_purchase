@@ -3,7 +3,7 @@ package com.kroha.in_app_purchase.billingClientService
 import android.app.Activity
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.*
-import com.kroha.in_app_purchase.ErrorUtils
+import com.kroha.in_app_purchase.errorHandler.*
 import com.kroha.in_app_purchase.mapper.BillingClientMapper
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.*
@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel.*
 class BillingClientServiceImpl(
     private val client: BillingClient,
     private val channel: MethodChannel,
+    private val errorHandler: ErrorHandler,
     private val mapper: BillingClientMapper
 ): BillingClientService {
     private val cachedSkuDetails = ArrayList<SkuDetails>()
@@ -23,11 +24,8 @@ class BillingClientServiceImpl(
                 val isConnected = billingResult.responseCode == BillingResponseCode.OK
                 channel.invokeMethod("connection-updated", mapOf("connected" to isConnected))
 
-                if (isConnected) {
-                    result.success(true)
-                } else {
-                    result.error("initConnection", "responseCode: ${billingResult.responseCode}", billingResult.debugMessage)
-                }
+                if (isConnected) return result.success(true)
+                errorHandler.submitBillingErrorResult(result, billingResult)
             }
 
             override fun onBillingServiceDisconnected() {
@@ -48,13 +46,12 @@ class BillingClientServiceImpl(
     override fun consumeAllItems(result: Result) {
         client.queryPurchasesAsync(SkuType.INAPP) { billingResult, purchases ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
-                val resultMap = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                result.error(resultMap[0], resultMap[1], billingResult.debugMessage)
+                errorHandler.submitBillingErrorResult(result, billingResult)
                 return@queryPurchasesAsync
             }
 
             if (purchases.isEmpty()) {
-                result.error("consumeAllItems", "refreshItem", "No purchases found")
+                errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_CONSUMED_ALL)
                 return@queryPurchasesAsync
             }
 
@@ -76,8 +73,7 @@ class BillingClientServiceImpl(
         val params = SkuDetailsParams.newBuilder().setSkusList(skuList).setType(type).build()
         client.querySkuDetailsAsync(params) { billingResult, details ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
-                val errorData = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                result.error("getItemsByType", errorData[0], errorData[1])
+                errorHandler.submitBillingErrorResult(result, billingResult)
                 return@querySkuDetailsAsync
             }
 
@@ -94,8 +90,7 @@ class BillingClientServiceImpl(
     override fun getPurchasedProductsByType(result: Result, type: String) {
         client.queryPurchasesAsync(type) { billingResult, purchases ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
-                val resultMap = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                result.error(resultMap[0], resultMap[1], billingResult.debugMessage)
+                errorHandler.submitBillingErrorResult(result, billingResult)
                 return@queryPurchasesAsync
             }
 
@@ -107,8 +102,7 @@ class BillingClientServiceImpl(
     override fun getPurchaseHistoryByType(result: Result, type: String) {
         client.queryPurchaseHistoryAsync(type)  { billingResult, historyRecords ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
-                val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                result.error("getPurchaseHistoryByType", errorData[0], errorData[1])
+                errorHandler.submitBillingErrorResult(result, billingResult)
                 return@queryPurchaseHistoryAsync
             }
 
@@ -124,8 +118,7 @@ class BillingClientServiceImpl(
 
         client.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
-                val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                result.error("acknowledgePurchase", errorData[0], errorData[1])
+                errorHandler.submitBillingErrorResult(result, billingResult)
                 return@acknowledgePurchase
             }
 
@@ -140,8 +133,7 @@ class BillingClientServiceImpl(
 
         client.consumeAsync(params) { billingResult, outToken ->
             if (billingResult.responseCode != BillingResponseCode.OK) {
-                val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-                result.error("consumeProduct", errorData[0], errorData[1])
+                errorHandler.submitBillingErrorResult(result, billingResult)
                 return@consumeAsync
             }
 
@@ -159,7 +151,7 @@ class BillingClientServiceImpl(
         val selectedSku: SkuDetails? = cachedSkuDetails.firstOrNull { d -> d.sku == sku }
         if (selectedSku == null) {
             val debugMessage = "The sku was not found. Please fetch products first by calling getItems"
-            return result.error("in_app_purchase", "buyItemByType", debugMessage)
+            return errorHandler.submitArgsErrorResult(result, debugMessage)
         }
 
         val builder = BillingFlowParams.newBuilder()
@@ -184,10 +176,10 @@ class BillingClientServiceImpl(
         val selectedSku: SkuDetails? = cachedSkuDetails.firstOrNull { d -> d.sku == newSubscriptionSku }
         if (selectedSku == null) {
             val debugMessage = "The sku was not found. Please fetch products first by calling getItems"
-            return result.error("in_app_purchase", "updateSubscription", debugMessage)
+            return errorHandler.submitArgsErrorResult(result, debugMessage)
         } else if (selectedSku.type != SkuType.SUBS){
             val debugMessage = "Selected sku is not a subscription"
-            return result.error("in_app_purchase", "updateSubscription", debugMessage)
+            return errorHandler.submitArgsErrorResult(result, debugMessage)
         }
 
         val updateParams = BillingFlowParams.SubscriptionUpdateParams.newBuilder()

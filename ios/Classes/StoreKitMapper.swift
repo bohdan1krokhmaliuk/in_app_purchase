@@ -54,7 +54,7 @@ struct StoreKitMapperImpl : StoreKitMapper {
         var discounts = [[String: Any?]]()
         var introductoryDiscount: [String: Any?]?
         if #available(iOS 12.2, *){
-            if let introductory = product.introductoryPrice{
+            if let introductory = product.introductoryPrice {
                 introductoryDiscount = toJson(introductory)
             }
             periodNumberIOS = product.subscriptionPeriod?.numberOfUnits

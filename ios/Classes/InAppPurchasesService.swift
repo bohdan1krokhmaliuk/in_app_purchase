@@ -82,7 +82,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         }
         
         guard let product = inAppPurchasesCache.first(where: {$0.productIdentifier == identifier}) else {
-            return result(errorHandler.buildStandardError(ErrorCode.noSuchInAppPurchase))
+            return result(errorHandler.buildStandardFlutterError(PurchaseError.noSuchInAppPurchase))
         }
     
         let payment = SKMutablePayment(product: product)
@@ -148,7 +148,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         for transaction in queue.transactions {
             if transaction.transactionIdentifier == identifier || transaction.payment.productIdentifier == sku {
                 if transaction.transactionState == .purchasing {
-                    return result(errorHandler.buildStandardError(ErrorCode.finishTransactionError))
+                    return result(errorHandler.buildStandardFlutterError(PurchaseError.finishTransactionError))
                 }
                 
                 queue.finishTransaction(transaction)
@@ -177,7 +177,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     /// You can't make another request untill previos finished
     func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult) {
         if restoreResult != nil {
-            return result(errorHandler.buildStandardError(ErrorCode.requestAlreadyProcessing))
+            return result(errorHandler.buildStandardFlutterError(PurchaseError.requestAlreadyProcessing))
         }
         
         if let userHash = args["forUser"] as? String {
@@ -248,12 +248,13 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
         receiptService.requestReceiptData() {(receipt, error) -> () in
             if receipt != nil {
                 var transactionMaps = [[String: Any?]]()
-                for transaction in queue.transactions {
+                queue.transactions.forEach({(transaction) -> () in
                     if transaction.transactionState == .restored {
                         transactionMaps.append(self.mapper.toJson(transaction, receipt!))
                         queue.finishTransaction(transaction)
                     }
-                }
+                })
+
                 self.restoreResult?(transactionMaps)
             }
             else if error != nil {
@@ -265,6 +266,12 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+        queue.transactions.forEach({(transaction) -> Void in
+            if transaction.transactionState == .restored {
+                queue.finishTransaction(transaction)
+            }
+        })
+        
         restoreResult?(errorHandler.buildSKError(error as NSError))
         restoreResult = nil
     }

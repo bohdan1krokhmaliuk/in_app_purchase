@@ -36,7 +36,7 @@ public class SwiftInAppPurchasePlugin: NSObject, FlutterPlugin {
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if service == nil {
-            let code = ErrorCode.serviceNotReady
+            let code = PurchaseError.serviceNotReady
             return result(FlutterError(code: code.rawValue, message: code.defaultMessage, details: nil))
         }
         

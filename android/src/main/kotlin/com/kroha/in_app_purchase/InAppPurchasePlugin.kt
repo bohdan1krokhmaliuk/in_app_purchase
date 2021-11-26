@@ -1,6 +1,7 @@
 package com.kroha.in_app_purchase
 
 import com.kroha.in_app_purchase.billingClientService.BillingClientServiceFactory
+import com.kroha.in_app_purchase.errorHandler.ErrorHandlerImpl
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -13,7 +14,7 @@ class InAppPurchasePlugin: FlutterPlugin, ActivityAware {
 
   override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(binding.binaryMessenger, channelId)
-    handler = MethodCallHandler(channel, binding.applicationContext, BillingClientServiceFactory())
+    handler = MethodCallHandler(channel, ErrorHandlerImpl(), binding.applicationContext, BillingClientServiceFactory())
     channel.setMethodCallHandler(handler)
   }
 

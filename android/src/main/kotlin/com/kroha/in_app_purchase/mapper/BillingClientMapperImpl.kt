@@ -1,7 +1,7 @@
 package com.kroha.in_app_purchase.mapper
 
 import com.android.billingclient.api.*
-import com.kroha.in_app_purchase.ErrorUtils
+import com.kroha.in_app_purchase.errorHandler.*
 import java.util.HashMap
 
 class BillingClientMapperImpl : BillingClientMapper {
@@ -76,26 +76,22 @@ class BillingClientMapperImpl : BillingClientMapper {
         map["originalLocalizedPrice"] = skuDetails.originalPrice
         map["originalPrice"] = skuDetails.originalPriceAmountMicros / 1000000f
 
-
         return map
     }
 
-    override fun toJson(billingResult: BillingResult): HashMap<String, Any> {
-        billingResult.debugMessage
-        val errorData: Array<String> = ErrorUtils.getBillingResponseData(billingResult.responseCode)
-        return buildBillingResultMap(billingResult, errorData[0], errorData[1])
+    override fun toJson(billingResult: BillingResult): HashMap<String, Any?> {
+
+        val error = ErrorHandler.getBillingResponseError(billingResult.responseCode)
+        return buildBillingResultMap(error, billingResult.debugMessage)
     }
 
-    private fun buildBillingResultMap(
-        billingResult: BillingResult,
-        errorCode: String,
-        message: String
-    ): HashMap<String, Any> {
-        val map = HashMap<String, Any>()
-        map["responseCode"] = billingResult.responseCode
-        map["debugMessage"] = billingResult.debugMessage
-        map["message"] = message
-        map["code"] = errorCode
+    private fun buildBillingResultMap(error: PurchaseError, debugMessage: String?): HashMap<String, Any?> {
+        val map = HashMap<String, Any?>()
+
+        map["debugMessage"] = debugMessage
+        map["message"] = error.message
+        map["code"] = error.code
+
         return map
     }
 }
