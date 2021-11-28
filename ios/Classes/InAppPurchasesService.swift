@@ -5,8 +5,6 @@
 //  Created by Bohdan Krokhmaliuk on 19.11.2021.
 //
 
-// TODO: Implement logger
-
 import Foundation
 import StoreKit
 
@@ -344,17 +342,15 @@ extension InAppPurchasesServiceImpl: SKProductsRequestDelegate {
         if request is SKProductsRequest {
             let productRequest = request as! SKProductsRequest
             if let result = fetchInAppPurchsesRequestResult[productRequest] {
-                logger.log("[InAppPurchase] request failed")
                 fetchInAppPurchsesRequestResult.removeValue(forKey: productRequest)
+                logger.log("[InAppPurchase] request failed")
                 result(errorHandler.buildSKError(error as NSError))
-                logger.log("[InAppPurchase] request finished")
             }
         }
     }
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         if let result = fetchInAppPurchsesRequestResult[request] {
-            logger.log("[InAppPurchase] request succeed")
             fetchInAppPurchsesRequestResult.removeValue(forKey: request)
             response.products.forEach(cacheInAppPurchase)
             
@@ -362,8 +358,8 @@ extension InAppPurchasesServiceImpl: SKProductsRequestDelegate {
                 logger.log("[InAppPurchase] invalid skus: \(response.invalidProductIdentifiers)")
             }
             
+            logger.log("[InAppPurchase] request succeed")
             result(inAppPurchasesCache.map(mapper.toJson))
-            logger.log("[InAppPurchase] request finished")
         }
     }
     
