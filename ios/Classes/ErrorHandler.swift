@@ -32,6 +32,7 @@ enum PurchaseError: String {
     // Custom errors
     case serviceNotReady = "E_SERVICE_NOT_READY"
     case argumentError = "E_MISSING_ARGUMENT"
+    case receiptError = "E_RECEIPT_ERROR"
     case finishTransactionError = "E_FINISH_TRANSACTION"
     case requestAlreadyProcessing = "E_REQUEST_PROCESSING"
     case noSuchInAppPurchase = "E_IN_APP_PURCHASE_MISSING"
@@ -80,8 +81,10 @@ extension PurchaseError {
             return "previous request is not finished yet"
         case .noSuchInAppPurchase:
             return "in app purchase with provided sku is missing in cache, try to "
+        case .receiptError:
+            return "Failed to fetch receipt"
         case .serviceNotReady:
-            return "swift in app purchases service is not initialized yet, try again later."
+            return "swift in app purchases service is not initialized yet, try again later"
         default:
             return ""
         }
@@ -117,11 +120,9 @@ extension PurchaseError {
 protocol ErrorHandler {
     func buildFlutterError(_ code: PurchaseError, _ message: String?, _ details: Any?) -> FlutterError
     func buildSKError(_ error: NSError) -> FlutterError
-    func buildStandardFlutterError(_ code: PurchaseError) -> FlutterError
     func buildArgumentError(_ message: String) -> FlutterError
-    
-    func buildSKErrorMap(_ error: NSError, _ debugMessage: String?) -> [String: String?]
-    func buildErrorMap(_ code: String, _ message: String, _ debugMessage: String?) -> [String: String?]
+    func buildStandardFlutterError(_ code: PurchaseError) -> FlutterError
+    func buildTransactionError(_ sku: String, _ error: NSError, _ debugMessage: String?) -> [String: String?]
 }
 
 struct ErrorHandlerImpl: ErrorHandler {
@@ -142,17 +143,10 @@ struct ErrorHandlerImpl: ErrorHandler {
         return FlutterError(code: skError.rawValue, message: skError.defaultMessage, details: nil)
     }
     
-    func buildErrorMap(_ code: String, _ message: String, _ debugMessage: String?)  -> [String: String?] {
-        return [
-            "code": code,
-            "message": message,
-            "debugMessage" : debugMessage
-        ]
-    }
-    
-    func buildSKErrorMap(_ error: NSError, _ debugMessage: String?) -> [String: String?] {
+    func buildTransactionError(_ sku: String, _ error: NSError, _ debugMessage: String?) -> [String: String?] {
         let skError = buildSkError(error.code)
         return [
+            "sku": sku,
             "code": skError.rawValue,
             "debugMessage" : debugMessage,
             "message": skError.defaultMessage

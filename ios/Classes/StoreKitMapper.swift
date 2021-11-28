@@ -9,39 +9,14 @@ import Foundation
 import StoreKit
 
 protocol StoreKitMapper {
-    func toJson(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?]
-    
     @available(iOS 12.2, *)
     func toJson(_ discount: SKProductDiscount) -> [String: Any?]
-    
+    func toJson(_ transaction: SKPaymentTransaction) -> [String: Any?]
+    func toJson(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?]
     func toJson(_ product: SKProduct) -> [String: Any?]
 }
 
 struct StoreKitMapperImpl : StoreKitMapper {
-    func toJson(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?] {
-        var date: NSNumber?
-        var originalDate: NSNumber?
-        
-        if transaction.transactionDate != nil {
-            date = NSNumber(value: lround(transaction.transactionDate!.timeIntervalSince1970 * 1000))
-        }
-        if transaction.original?.transactionDate != nil {
-            originalDate = NSNumber(value: lround(transaction.original!.transactionDate!.timeIntervalSince1970 * 1000))
-        }
-        
-        return [
-            "date": date,
-            "receipt": receipt,
-            "quantity": transaction.payment.quantity,
-            "sku": transaction.payment.productIdentifier,
-            "transactionId": transaction.transactionIdentifier,
-            "applicationUsername": transaction.payment.applicationUsername,
-            "transactionStateIOS": NSNumber(value: transaction.transactionState.rawValue),
-            "originalTransactionDate": originalDate,
-            "originalTransactionIdentifier": transaction.original?.transactionIdentifier,
-        ]
-    }
-    
     func toJson(_ product: SKProduct) -> [String: Any?] {
         let formatter = NumberFormatter();
         formatter.numberStyle = .currency
@@ -99,4 +74,35 @@ struct StoreKitMapperImpl : StoreKitMapper {
         ]
     }
     
+    func toJson(_ transaction: SKPaymentTransaction) -> [String: Any?] {
+        return transactionToJson(transaction, nil)
+    }
+    
+    func toJson(_ transaction: SKPaymentTransaction, _ receipt: String) -> [String: Any?] {
+        return transactionToJson(transaction, receipt)
+    }
+    
+    private func transactionToJson(_ transaction: SKPaymentTransaction, _ receipt: String?) -> [String: Any?] {
+        var date: NSNumber?
+        var originalDate: NSNumber?
+        
+        if transaction.transactionDate != nil {
+            date = NSNumber(value: lround(transaction.transactionDate!.timeIntervalSince1970 * 1000))
+        }
+        if transaction.original?.transactionDate != nil {
+            originalDate = NSNumber(value: lround(transaction.original!.transactionDate!.timeIntervalSince1970 * 1000))
+        }
+        
+        return [
+            "date": date,
+            "receipt": receipt,
+            "quantity": transaction.payment.quantity,
+            "sku": transaction.payment.productIdentifier,
+            "transactionId": transaction.transactionIdentifier,
+            "applicationUsername": transaction.payment.applicationUsername,
+            "transactionStateIOS": NSNumber(value: transaction.transactionState.rawValue),
+            "originalTransactionDate": originalDate,
+            "originalTransactionIdentifier": transaction.original?.transactionIdentifier,
+        ]
+    }
 }

@@ -25,24 +25,12 @@ class MethodCallHandler(
     private var service: BillingClientService? = null
 
     companion object {
-        private const val initConnection = "initConnection"
-        private const val endConnection = "endConnection"
-        private const val consumeAllItems = "consumeAllItems"
-        private const val getItemsByType = "getItemsByType"
-        private const val getAvailableItemsByType = "getAvailableItemsByType"
-        private const val getPurchaseHistoryByType = "getPurchaseHistoryByType"
-        private const val buyItemByType = "buyItemByType"
-        private const val updateSubscription = "updateSubscription"
-        private const val acknowledgePurchase = "acknowledgePurchase"
-        private const val consumeProduct = "consumeProduct"
-
-
-        private const val skuInvalidErr ="Sku must be non nullable"
-        private const val skusInvalidErr = "Skus must be non nullable"
-        private const val tokenInvalidErr = "Token must be non nullable"
-        private const val oldTokenInvalidErr = "'oldSkuPurchaseToken' must be specified"
-        private const val typeInvalidErr = "Type var must be one of next values: [subs, inapp]"
-        private const val pendingPurchasesErr = "Please specify if service should enable pending purchases"
+        private const val skuInvalidMessage = "Sku must be non nullable"
+        private const val skusInvalidMessage = "Skus must be non nullable"
+        private const val tokenInvalidMessage = "Token must be non nullable"
+        private const val oldTokenInvalidMessage = "'oldSkuPurchaseToken' must be specified"
+        private const val typeInvalidMessage = "Type var must be one of next values: [subs, inapp]"
+        private const val pendingPurchasesMessage = "Please specify if service should enable pending purchases"
     }
 
     fun setActivity(activity: Activity?) {
@@ -52,61 +40,61 @@ class MethodCallHandler(
     override fun onMethodCall(call: MethodCall, result: Result) {
         val isServiceInitialized = service?.isReady ?: false
 
-        if (call.method != initConnection && !isServiceInitialized) {
+        if (call.method != Method.initConnection && !isServiceInitialized) {
             return errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_SERVICE_NOT_READY)
         }
 
         when (call.method) {
-            initConnection -> {
+            Method.initConnection -> {
                 val enablePendingPurchases: Boolean = call.argument("enablePendingPurchases")
-                    ?: return errorHandler.submitArgsErrorResult(result, pendingPurchasesErr)
+                    ?: return errorHandler.submitArgsErrorResult(result, pendingPurchasesMessage)
 
                 service = billingServiceFactory.createBillingClient(applicationContext, channel, errorHandler, enablePendingPurchases)
                 service?.initConnection(result)
             }
-            endConnection -> service?.endConnection(result)
-            consumeAllItems -> service?.consumeAllItems(result)
-            getItemsByType -> {
+            Method.endConnection -> service?.endConnection(result)
+            Method.consumeAllItems -> service?.consumeAllItems(result)
+            Method.getItemsByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
-                    return errorHandler.submitArgsErrorResult(result, typeInvalidErr)
+                    return errorHandler.submitArgsErrorResult(result, typeInvalidMessage)
                 }
                 val skuList: ArrayList<String> = call.argument("skus")
-                    ?: return errorHandler.submitArgsErrorResult(result, skusInvalidErr)
+                    ?: return errorHandler.submitArgsErrorResult(result, skusInvalidMessage)
 
 
                 service?.getInAppPurchasesByType(result, skuList, type)
             }
-            getAvailableItemsByType -> {
+            Method.getAvailableItemsByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
-                    return errorHandler.submitArgsErrorResult(result, typeInvalidErr)
+                    return errorHandler.submitArgsErrorResult(result, typeInvalidMessage)
                 }
 
                 service?.getPurchasedProductsByType(result, type)
             }
-            getPurchaseHistoryByType -> {
+            Method.getPurchaseHistoryByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
-                    return errorHandler.submitArgsErrorResult(result, typeInvalidErr)
+                    return errorHandler.submitArgsErrorResult(result, typeInvalidMessage)
                 }
 
                 service?.getPurchaseHistoryByType(result, type)
             }
-            buyItemByType -> {
+            Method.buyItemByType -> {
                 val sku: String? = call.argument("sku")
                 val obfuscatedAccountId: String? = call.argument("obfuscatedAccountId")
                 val obfuscatedProfileId: String? = call.argument("obfuscatedProfileId")
 
                 if (sku == null) {
-                    return errorHandler.submitArgsErrorResult(result, skuInvalidErr)
+                    return errorHandler.submitArgsErrorResult(result, skuInvalidMessage)
                 } else if (activity == null){
                     return errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_ACTIVITY_UNAVAILABLE)
                 }
 
                 service?.buyItem(result, activity!!, sku, obfuscatedAccountId, obfuscatedProfileId)
             }
-            updateSubscription -> {
+            Method.updateSubscription -> {
                 val newSubscriptionSku: String? = call.argument("sku")
                 val prorationMode: Int? = call.argument("prorationMode")
                 val obfuscatedAccountId: String? = call.argument("obfuscatedAccountId")
@@ -114,9 +102,9 @@ class MethodCallHandler(
                 val oldSkuPurchaseToken: String? = call.argument("purchaseToken")
 
                 if (newSubscriptionSku == null) {
-                    return errorHandler.submitArgsErrorResult(result, skuInvalidErr)
+                    return errorHandler.submitArgsErrorResult(result, skuInvalidMessage)
                 } else if (oldSkuPurchaseToken == null || oldSkuPurchaseToken.isEmpty()){
-                    return errorHandler.submitArgsErrorResult(result, oldTokenInvalidErr)
+                    return errorHandler.submitArgsErrorResult(result, oldTokenInvalidMessage)
                 } else if (activity == null){
                     return errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_ACTIVITY_UNAVAILABLE)
                 }
@@ -132,17 +120,23 @@ class MethodCallHandler(
                     obfuscatedProfileId
                 )
             }
-            acknowledgePurchase -> {
+            Method.acknowledgePurchase -> {
                 val token: String = call.argument("token")
-                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidErr)
+                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidMessage)
 
-                service?.acknowledgePurchase(result, token)
+                service?.acknowledge(result, token)
             }
-            consumeProduct -> {
+            Method.consumeProduct -> {
                 val token: String = call.argument("token")
-                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidErr)
+                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidMessage)
 
                 service?.consumeProduct(result, token)
+            }
+            Method.setLogging -> {
+                val enable: Boolean = call.argument("enable")
+                    ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidMessage)
+
+                service?.setLogging(enable, result)
             }
             else -> result.notImplemented()
         }

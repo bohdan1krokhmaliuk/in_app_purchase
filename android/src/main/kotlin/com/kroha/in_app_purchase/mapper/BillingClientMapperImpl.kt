@@ -79,19 +79,17 @@ class BillingClientMapperImpl : BillingClientMapper {
         return map
     }
 
-    override fun toJson(billingResult: BillingResult): HashMap<String, Any?> {
-
+    override fun toJson(sku: String?, skus: ArrayList<String>?, billingResult: BillingResult): HashMap<String, Any?> {
         val error = ErrorHandler.getBillingResponseError(billingResult.responseCode)
-        return buildBillingResultMap(error, billingResult.debugMessage)
-    }
-
-    private fun buildBillingResultMap(error: PurchaseError, debugMessage: String?): HashMap<String, Any?> {
         val map = HashMap<String, Any?>()
 
-        map["debugMessage"] = debugMessage
         map["message"] = error.message
         map["code"] = error.code
+        map["skus"] = skus
+        map["sku"] = sku
 
         return map
     }
+
+
 }

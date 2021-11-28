@@ -13,6 +13,11 @@ protocol ReceiptService {
 }
 
 class ReceiptServiceImpl :  NSObject, SKRequestDelegate, ReceiptService {
+    override init() {
+        self.errorHandler = ErrorHandlerImpl()
+    }
+    
+    private let errorHandler: ErrorHandler
     private var refreshReceiptCallbacks = [((String?, FlutterError?) -> ())]()
     private var isReceiptPresent: Bool {
         get {
@@ -60,6 +65,6 @@ class ReceiptServiceImpl :  NSObject, SKRequestDelegate, ReceiptService {
     }
     
     func buildError(_ message: String) -> FlutterError {
-        return FlutterError(code: "E_RECEIPT_ERROR", message: message, details: nil)
+        return errorHandler.buildFlutterError(PurchaseError.receiptError, message, nil)
     }
 }

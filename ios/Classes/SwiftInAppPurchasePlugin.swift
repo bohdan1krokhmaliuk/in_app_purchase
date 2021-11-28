@@ -9,20 +9,6 @@ import Flutter
 import UIKit
 import StoreKit
 
-private enum Method: String {
-    case initConnection = "canMakePayments"
-    case endConnection = "endConnection"
-    case buyProduct = "buyProduct"
-    case fetchInAppPurchases = "getItems"
-    case requestReceipt = "requestReceipt"
-    case getPendingTransactions = "getPendingTransactions"
-    case finishTransaction = "finishTransaction"
-    case finishAllCompletedTransactions = "clearTransactions"
-    case retrievePurchasedProducts = "getAvailableItems"
-    case getAppStoreInitiatedProducts = "getAppStoreInitiatedProducts"
-    case getCachedInAppPurchases = "getCachedInAppPurchases"
-}
-
 public class SwiftInAppPurchasePlugin: NSObject, FlutterPlugin {
     private var service: InAppPurchasesService?;
     
@@ -69,6 +55,8 @@ public class SwiftInAppPurchasePlugin: NSObject, FlutterPlugin {
             service?.fetchInAppPurchases(argsMap, result: result)
         case .retrievePurchasedProducts:
             service?.retrievePurchasedProducts(argsMap, result: result)
+        case .setLogging
+            service?.setLogging(argsMap, result: result)
         }
     }
     
