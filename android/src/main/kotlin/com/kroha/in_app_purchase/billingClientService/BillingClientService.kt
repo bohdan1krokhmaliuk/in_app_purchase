@@ -10,7 +10,7 @@ interface BillingClientService {
     fun endConnection(result: Result)
     fun endConnection()
 
-    fun setLogging(enabled: Boolean, result: Result)
+    fun enableLogging(enable: Boolean, result: Result)
     fun consumeAllItems(result: Result)
     fun getInAppPurchasesByType(result: Result, skuList: ArrayList<String>, type: String)
     fun getPurchasedProductsByType(result: Result, type: String)

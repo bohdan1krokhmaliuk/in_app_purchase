@@ -9,18 +9,20 @@ import Foundation
 
 /// Incoming methods
 enum Method: String {
-    case initConnection = "canMakePayments"
-    case endConnection = "endConnection"
+    case initConnection = "init_connection"
+    case endConnection = "end_connection"
+    case setLogging = "enable_logging"
+    case getInAppPurchases = "get_in_app_purchases"
+    case getPurchasedProducts = "get_purchased_products"
+    
     case buyProduct = "buyProduct"
-    case fetchInAppPurchases = "getItems"
     case requestReceipt = "requestReceipt"
     case getPendingTransactions = "getPendingTransactions"
     case finishTransaction = "finishTransaction"
     case finishAllCompletedTransactions = "clearTransactions"
-    case retrievePurchasedProducts = "getAvailableItems"
     case getAppStoreInitiatedProducts = "getAppStoreInitiatedProducts"
     case getCachedInAppPurchases = "getCachedInAppPurchases"
-    case setLogging = "setLogging"
+    
 }
 
 /// Outgoing methods

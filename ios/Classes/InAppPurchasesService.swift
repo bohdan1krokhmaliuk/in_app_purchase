@@ -11,7 +11,7 @@ import StoreKit
 protocol InAppPurchasesService {
     func initConnection(result: @escaping FlutterResult)
     func endConnection(result: @escaping FlutterResult)
-    func setLogging(_ args: [String: Any?], result: @escaping FlutterResult)
+    func enableLogging(_ args: [String: Any?], result: @escaping FlutterResult)
     
     func requestReceipt(result: @escaping FlutterResult)
     func getPendingTransactions(result: @escaping FlutterResult)
@@ -21,8 +21,8 @@ protocol InAppPurchasesService {
     
     func buyProduct(_ args: [String: Any?], result: @escaping FlutterResult)
     func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult)
-    func fetchInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult)
-    func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult)
+    func getInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult)
+    func getPurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult)
 }
 
 class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
@@ -50,12 +50,12 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         return SKPaymentQueue.default()
     }
     
-    func setLogging(_ args: [String: Any?], result: @escaping FlutterResult) {
+    func enableLogging(_ args: [String: Any?], result: @escaping FlutterResult) {
         guard let enable = args["enable"] as? Bool else {
             return result(errorHandler.buildArgumentError("set logging: enable property not provided"))
         };
         enable ? logger.enable() : logger.disable()
-        result(true)
+        result(enable)
     }
     
     func initConnection(result: @escaping FlutterResult) {
@@ -70,7 +70,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         result(true)
     }
     
-    func fetchInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult) {
+    func getInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult) {
         guard let identifiers = args["skus"] as? Array<String> else {
             return result(errorHandler.buildArgumentError("fetchInAppPurchases: 'skus' must be provided"))
         };
@@ -211,7 +211,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     /// failed: func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error);
     ///
     /// You can't make another request untill previos finished
-    func retrievePurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult) {
+    func getPurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult) {
         if restoreResult != nil {
             return result(errorHandler.buildStandardFlutterError(PurchaseError.requestAlreadyProcessing))
         }

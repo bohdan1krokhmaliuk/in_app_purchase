@@ -46,7 +46,7 @@ class MethodCallHandler(
 
         when (call.method) {
             Method.initConnection -> {
-                val enablePendingPurchases: Boolean = call.argument("enablePendingPurchases")
+                val enablePendingPurchases: Boolean = call.argument("enable_pending_purchases")
                     ?: return errorHandler.submitArgsErrorResult(result, pendingPurchasesMessage)
 
                 service = billingServiceFactory.createBillingClient(applicationContext, channel, errorHandler, enablePendingPurchases)
@@ -54,7 +54,7 @@ class MethodCallHandler(
             }
             Method.endConnection -> service?.endConnection(result)
             Method.consumeAllItems -> service?.consumeAllItems(result)
-            Method.getItemsByType -> {
+            Method.getInAppPurchases -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
                     return errorHandler.submitArgsErrorResult(result, typeInvalidMessage)
@@ -65,7 +65,7 @@ class MethodCallHandler(
 
                 service?.getInAppPurchasesByType(result, skuList, type)
             }
-            Method.getAvailableItemsByType -> {
+            Method.getPurchasedProductsByType -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
                     return errorHandler.submitArgsErrorResult(result, typeInvalidMessage)
@@ -132,11 +132,11 @@ class MethodCallHandler(
 
                 service?.consumeProduct(result, token)
             }
-            Method.setLogging -> {
+            Method.enableLogging -> {
                 val enable: Boolean = call.argument("enable")
                     ?: return errorHandler.submitArgsErrorResult(result, tokenInvalidMessage)
 
-                service?.setLogging(enable, result)
+                service?.enableLogging(enable, result)
             }
             else -> result.notImplemented()
         }

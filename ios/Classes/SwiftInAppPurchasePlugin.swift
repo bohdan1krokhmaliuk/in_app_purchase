@@ -51,12 +51,12 @@ public class SwiftInAppPurchasePlugin: NSObject, FlutterPlugin {
             service?.buyProduct(argsMap, result: result)
         case .finishTransaction:
             service?.finishTransaction(argsMap, result: result)
-        case .fetchInAppPurchases:
-            service?.fetchInAppPurchases(argsMap, result: result)
-        case .retrievePurchasedProducts:
-            service?.retrievePurchasedProducts(argsMap, result: result)
+        case .getInAppPurchases:
+            service?.getInAppPurchases(argsMap, result: result)
+        case .getPurchasedProducts:
+            service?.getPurchasedProducts(argsMap, result: result)
         case .setLogging:
-            service?.setLogging(argsMap, result: result)
+            service?.enableLogging(argsMap, result: result)
         }
     }
     

@@ -21,9 +21,9 @@ class BillingClientServiceImpl(
     override val isReady: Boolean
         get() = client.isReady
 
-    override fun setLogging(enabled: Boolean, result: Result){
-        if (enabled) logger.enable() else logger.disable()
-        result.success(true)
+    override fun enableLogging(enable: Boolean, result: Result){
+        if (enable) logger.enable() else logger.disable()
+        result.success(enable)
     }
 
     override fun initConnection(result: Result) {
@@ -56,46 +56,6 @@ class BillingClientServiceImpl(
     override fun endConnection() {
         client.endConnection()
         logger.log("[Connection] finished")
-    }
-
-    override fun consumeAllItems(result: Result) {
-        logger.log("[Consume] started for all products")
-        client.queryPurchasesAsync(SkuType.INAPP) { billingResult, purchases ->
-            if (billingResult.responseCode != BillingResponseCode.OK) {
-                errorHandler.submitBillingErrorResult(result, billingResult)
-                logger.log("[Consume] failed")
-                return@queryPurchasesAsync
-            }
-
-            if (purchases.isEmpty()) {
-                errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_CONSUMED_ALL)
-                logger.log("[Consume] no consumable purchases")
-                return@queryPurchasesAsync
-            }
-
-            val array: ArrayList<String> = ArrayList()
-            for (purchase in purchases) {
-                val consumeParams = ConsumeParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-
-                logger.log("[Consume] skus: ${purchase.skus}; consume requested")
-                client.consumeAsync(consumeParams) { billingResult, token ->
-                    if (billingResult.responseCode != BillingResponseCode.OK){
-                        logger.log("[Consume] skus: ${purchase.skus}; succeed")
-                    }
-                    else {
-                        logger.log("[Consume] skus: ${purchase.skus}; failed")
-                    }
-
-                    array.add(token)
-                    if (purchases.size == array.size) {
-                        logger.log("[Consume] all purchases consumption finished")
-                        result.success(array)
-                    }
-                }
-            }
-        }
     }
 
     override fun getInAppPurchasesByType(result: Result, skuList: ArrayList<String>, type: String) {
@@ -168,24 +128,6 @@ class BillingClientServiceImpl(
         }
     }
 
-    override fun consumeProduct(result: Result, token: String) {
-        val params = ConsumeParams.newBuilder()
-            .setPurchaseToken(token)
-            .build()
-
-        logger.log("[Consume] requested for purchase token $token")
-        client.consumeAsync(params) { billingResult, outToken ->
-            if (billingResult.responseCode != BillingResponseCode.OK) {
-                logger.log("[Consume] failed for purchase token $token")
-                errorHandler.submitBillingErrorResult(result, billingResult)
-                return@consumeAsync
-            }
-
-            logger.log("[Consume] succeed for purchase token $token")
-            result.success(outToken)
-        }
-    }
-
     override fun buyItem(
         result: Result,
         activity: Activity,
@@ -215,7 +157,6 @@ class BillingClientServiceImpl(
         client.launchBillingFlow(activity, builder.build())
         result.success(null)
     }
-
 
     override fun updateSubscription(
         result: Result,
@@ -256,5 +197,63 @@ class BillingClientServiceImpl(
         logger.log("[Purchase] sku: $newSubscriptionSku; launched billing flow for subscription update")
         client.launchBillingFlow(activity, builder.build())
         result.success(null)
+    }
+
+    override fun consumeProduct(result: Result, token: String) {
+        val params = ConsumeParams.newBuilder()
+            .setPurchaseToken(token)
+            .build()
+
+        logger.log("[Consume] requested for purchase token $token")
+        client.consumeAsync(params) { billingResult, outToken ->
+            if (billingResult.responseCode != BillingResponseCode.OK) {
+                logger.log("[Consume] failed for purchase token $token")
+                errorHandler.submitBillingErrorResult(result, billingResult)
+                return@consumeAsync
+            }
+
+            logger.log("[Consume] succeed for purchase token $token")
+            result.success(outToken)
+        }
+    }
+
+    override fun consumeAllItems(result: Result) {
+        logger.log("[Consume] started for all products")
+        client.queryPurchasesAsync(SkuType.INAPP) { billingResult, purchases ->
+            if (billingResult.responseCode != BillingResponseCode.OK) {
+                errorHandler.submitBillingErrorResult(result, billingResult)
+                logger.log("[Consume] failed")
+                return@queryPurchasesAsync
+            }
+
+            if (purchases.isEmpty()) {
+                errorHandler.submitPurchaseErrorResult(result, PurchaseError.E_CONSUMED_ALL)
+                logger.log("[Consume] no consumable purchases")
+                return@queryPurchasesAsync
+            }
+
+            val array: ArrayList<String> = ArrayList()
+            for (purchase in purchases) {
+                val consumeParams = ConsumeParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+
+                logger.log("[Consume] skus: ${purchase.skus}; consume requested")
+                client.consumeAsync(consumeParams) { consumeResult, token ->
+                    if (consumeResult.responseCode != BillingResponseCode.OK){
+                        logger.log("[Consume] skus: ${purchase.skus}; succeed")
+                    }
+                    else {
+                        logger.log("[Consume] skus: ${purchase.skus}; failed")
+                    }
+
+                    array.add(token)
+                    if (purchases.size == array.size) {
+                        logger.log("[Consume] all purchases consumption finished")
+                        result.success(array)
+                    }
+                }
+            }
+        }
     }
 }
