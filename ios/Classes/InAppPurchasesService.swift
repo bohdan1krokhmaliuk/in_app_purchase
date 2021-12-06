@@ -19,7 +19,7 @@ protocol InAppPurchasesService {
     func finishAllCompletedTransactions(result: @escaping FlutterResult)
     func getAppStoreInitiatedInAppPurchases(result: @escaping FlutterResult)
     
-    func buyProduct(_ args: [String: Any?], result: @escaping FlutterResult)
+    func startPurchase(_ args: [String: Any?], result: @escaping FlutterResult)
     func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult)
     func getInAppPurchases(_ args: [String: Any?], result: @escaping FlutterResult)
     func getPurchasedProducts(_ args: [String: Any?], result: @escaping FlutterResult)
@@ -88,9 +88,9 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         result(inAppPurchasesCache.map(mapper.toJson))
     }
 
-    func buyProduct(_ args: [String: Any?], result: @escaping FlutterResult) {
+    func startPurchase(_ args: [String: Any?], result: @escaping FlutterResult) {
         guard let sku = args["sku"] as? String else {
-            return result(errorHandler.buildArgumentError("buyProduct: 'sku' must be provided"))
+            return result(errorHandler.buildArgumentError("start_purchase: 'sku' must be provided"))
         }
         
         guard let product = inAppPurchasesCache.first(where: {$0.productIdentifier == sku}) else {
@@ -99,7 +99,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     
         logger.log("[Purchase] sku: \(sku); started")
         let payment = SKMutablePayment(product: product)
-        if let user = args["forUser"] as? String {
+        if let user = args["user"] as? String {
             payment.applicationUsername = user
             logger.log("[Purchase] sku: \(sku); User set (\(user))")
         }
@@ -111,25 +111,24 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         
         // Adds discount
         if #available(iOS 12.2, *) {
-            if let discountMap = args["withOffer"] as? [String: Any?] {
-                let keyIdentifier = discountMap["keyIdentifier"] as? String
-                let offerIdentifier = discountMap["identifier"] as? String
-                let timeStamp = discountMap["timestamp"] as? NSNumber
-                let signature = discountMap["signature"] as? String
-                let uuidString = discountMap["nonce"] as? String
-                let uuid = UUID(uuidString: uuidString!)
-                
-                if offerIdentifier != nil && keyIdentifier != nil && signature != nil && timeStamp != nil && uuid != nil {
-                    let discount = SKPaymentDiscount(
-                        identifier: offerIdentifier!,
-                        keyIdentifier: keyIdentifier!,
-                        nonce: uuid!,
-                        signature: signature!,
-                        timestamp: timeStamp!
-                    )
-                    payment.paymentDiscount = discount
-                    logger.log("[Purchase] sku: \(sku); Discount set (\(offerIdentifier!)")
-                }
+            let offer = args["offer"] as? [String: Any?]
+            if
+                let keyIdentifier = offer?["key_identifier"] as? String,
+                let offerIdentifier = offer?["identifier"] as? String,
+                let timeStamp = offer?["timestamp"] as? NSNumber,
+                let signature = offer?["signature"] as? String,
+                let uuidString = offer?["nonce"] as? String,
+                let uuid = UUID(uuidString: uuidString)
+            {
+                let discount = SKPaymentDiscount(
+                    identifier: offerIdentifier,
+                    keyIdentifier: keyIdentifier,
+                    nonce: uuid,
+                    signature: signature,
+                    timestamp: timeStamp
+                )
+                payment.paymentDiscount = discount
+                logger.log("[Purchase] sku: \(sku); Discount set (\(offerIdentifier)")
             }
         }
         
@@ -167,7 +166,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
     /// if transaction is finished returns success result
     /// if transaction is not in queue any more returns success result
     func finishTransaction(_ args: [String: Any?], result: @escaping FlutterResult) {
-        let identifier = args["transactionIdentifier"] as? String
+        let identifier = args["transaction_id"] as? String
         let sku = args["sku"] as? String
         
         if (sku == nil && identifier == nil) || (sku != nil && identifier != nil) {
@@ -218,7 +217,7 @@ class InAppPurchasesServiceImpl : NSObject, InAppPurchasesService {
         
         restoreResult = result
         
-        if let user = args["forUser"] as? String {
+        if let user = args["user"] as? String {
             logger.log("[Restore] started for user (\(user))")
             queue.restoreCompletedTransactions(withApplicationUsername: user)
         }
@@ -246,8 +245,8 @@ extension InAppPurchasesServiceImpl {
         appStoreInitiatedProducts.removeAll(where: {$0.productIdentifier == transaction.payment.productIdentifier})
         receiptService.requestReceiptData() {(receipt, error) -> () in
             if receipt != nil {
-                let transacition = self.mapper.toJson(transaction, receipt!)
-                self.channel.invokeMethod(OutMethod.purchaseUpdate.rawValue, arguments: transacition)
+                let transactionMap = self.mapper.toJson(transaction, receipt!)
+                self.channel.invokeMethod(OutMethod.purchaseUpdate.rawValue, arguments: transactionMap)
             }
         }
     }
@@ -277,15 +276,14 @@ extension InAppPurchasesServiceImpl: SKPaymentTransactionObserver {
             case .deferred:
                 logger.log("[Purchase] sku: \(sku); Transaction state: deffered")
                 processTransaction(transaction)
-            case .restored:
-                logger.log("[Purchase] sku: \(sku); Transaction state: restored")
-                processTransaction(transaction)
             case .purchased:
                 logger.log("[Purchase] sku: \(sku); Transaction state: purchased")
                 processPurchased(transaction)
             case .failed:
                 logger.log("[Purchase] sku: \(sku); Transaction state: failed")
                 processErrored(transaction)
+            case .restored:
+                logger.log("[Purchase] sku: \(sku); Transaction state: restored")
             @unknown default:
                 logger.log("[Purchase] sku: \(sku); Transaction state: unknown (\(transaction.transactionState))")
             }

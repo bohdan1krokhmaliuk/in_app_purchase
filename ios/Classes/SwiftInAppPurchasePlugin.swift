@@ -47,8 +47,8 @@ public class SwiftInAppPurchasePlugin: NSObject, FlutterPlugin {
             service?.getAppStoreInitiatedInAppPurchases(result: result)
         case .getCachedInAppPurchases:
             service?.getCachedInAppPurchases(result: result)
-        case .buyProduct:
-            service?.buyProduct(argsMap, result: result)
+        case .startPurchase:
+            service?.startPurchase(argsMap, result: result)
         case .finishTransaction:
             service?.finishTransaction(argsMap, result: result)
         case .getInAppPurchases:

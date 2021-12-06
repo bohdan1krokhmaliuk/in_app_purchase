@@ -1,12 +1,24 @@
 import 'package:flutter/services.dart';
-import 'package:in_app_purchase/models/base/in_app_purchase.dart';
-import 'package:in_app_purchase/models/base/purchase_details.dart';
 import 'package:in_app_purchase/models/base/result.dart';
 import 'package:in_app_purchase/models/ios/apple_in_app_purchase.dart';
-import 'package:in_app_purchase/models/ios/apple_purchase_details.dart';
+import 'package:in_app_purchase/models/ios/apple_payment_offer.dart';
+import 'package:in_app_purchase/models/ios/apple_transaction_details.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 
-class AppleInAppPurchases implements InAppPurchases {
+abstract class AppleInAppPurchases
+    implements
+        InAppPurchases<AppleInAppPurchase, ApplePurchaseDetails,
+            AppleRestoreDetails> {
+  @override
+  Future<Result<bool>> startPurchase(
+    final AppleInAppPurchase purchase, {
+    final int? quantity,
+    final ApplePaymentOffer? offer,
+    final String? obfuscatedAccountId,
+  });
+}
+
+class AppleInAppPurchasesImpl implements AppleInAppPurchases {
   static const MethodChannel _channel = MethodChannel('in_app_purchase');
 
   @override
@@ -15,7 +27,7 @@ class AppleInAppPurchases implements InAppPurchases {
   }) async {
     try {
       final isConnected = await _channel.invokeMethod<bool>('init_connection');
-      return Result.success(isConnected!);
+      return Result.success(isConnected ?? false);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
     }
@@ -32,7 +44,7 @@ class AppleInAppPurchases implements InAppPurchases {
   }
 
   @override
-  Future<Result<bool>> enableLogging(bool enable) async {
+  Future<Result<bool>> enableLogging(final bool enable) async {
     try {
       final isEnabled = await _channel.invokeMethod<bool>('enable_logging');
       return Result.success(isEnabled!);
@@ -43,7 +55,7 @@ class AppleInAppPurchases implements InAppPurchases {
 
   @override
   Future<Result<List<AppleInAppPurchase>>> getInAppPurchases(
-    List<String> skus,
+    final List<String> skus,
   ) async {
     try {
       final inAppPurchasesMap = await _channel.invokeListMethod(
@@ -52,7 +64,7 @@ class AppleInAppPurchases implements InAppPurchases {
       );
 
       final inAppPurchases = inAppPurchasesMap
-          ?.map((json) => AppleInAppPurchase.fromJSON(json))
+          ?.map((json) => AppleInAppPurchase.fromJson(json))
           .toList();
 
       return Result.success(inAppPurchases ?? []);
@@ -62,14 +74,14 @@ class AppleInAppPurchases implements InAppPurchases {
   }
 
   @override
-  Future<Result<List<PurchaseDetails>>> getPurchasedProducts() async {
+  Future<Result<List<AppleRestoreDetails>>> getPurchasedProducts() async {
     try {
       final inAppPurchasesMap = await _channel.invokeListMethod(
         'get_purchased_products',
       );
 
       final purchasedProducts = inAppPurchasesMap
-          ?.map((json) => ApplePurchaseDetails.fromJson(json))
+          ?.map((json) => AppleRestoreDetails.fromJson(json))
           .toList();
 
       return Result.success(purchasedProducts ?? []);
@@ -80,16 +92,38 @@ class AppleInAppPurchases implements InAppPurchases {
 
   @override
   Future<Result<bool>> startPurchase(
-    InAppPurchase purchase, {
-    String? obfuscatedAccountId,
-  }) {
-    // TODO: implement startPurchase
-    throw UnimplementedError();
+    final AppleInAppPurchase purchase, {
+    final int? quantity,
+    final ApplePaymentOffer? offer,
+    final String? obfuscatedAccountId,
+  }) async {
+    try {
+      await _channel.invokeMethod('start_purchase', <String, dynamic>{
+        'sku': purchase.sku,
+        'quantity': quantity,
+        'user': obfuscatedAccountId,
+        if (offer != null) 'offer': offer.toJSON()
+      });
+
+      return const Result.success(true);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
   }
 
   @override
-  Future<Result<bool>> finishPurchase(PurchaseDetails purchase) {
-    // TODO: implement finishPurchase
-    throw UnimplementedError();
+  Future<Result<bool>> finishPurchase(
+    final ApplePurchaseDetails purchase,
+  ) async {
+    try {
+      final isFinished = await _channel.invokeMethod<bool>(
+        'finish_transaction',
+        <String, dynamic>{'transaction_id': purchase.transactionId},
+      );
+
+      return Result.success(isFinished ?? false);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
   }
 }

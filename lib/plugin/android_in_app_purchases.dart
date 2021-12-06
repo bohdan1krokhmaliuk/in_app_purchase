@@ -1,12 +1,27 @@
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/models/android/google_in_app_purchase.dart';
-import 'package:in_app_purchase/models/android/google_purchase_details.dart';
-import 'package:in_app_purchase/models/base/in_app_purchase.dart';
-import 'package:in_app_purchase/models/base/purchase_details.dart';
+import 'package:in_app_purchase/models/android/google_transaction_details.dart';
 import 'package:in_app_purchase/models/base/result.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 
-class AndroidInAppPurchases extends InAppPurchases {
+abstract class AndroidInAppPurchases
+    implements
+        InAppPurchases<GoogleInAppPurchase, GooglePurchaseDetails,
+            GoogleRestoreDetails> {
+  @override
+  Future<Result<bool>> initConnection({
+    final bool enablePendingPurchases = true,
+  });
+
+  @override
+  Future<Result<bool>> startPurchase(
+    final GoogleInAppPurchase purchase, {
+    final String? obfuscatedAccountId,
+    final String? obfuscatedProfileId,
+  });
+}
+
+class AndroidInAppPurchasesImpl implements AndroidInAppPurchases {
   static const MethodChannel _channel = MethodChannel('in_app_purchase');
 
   @override
@@ -17,7 +32,7 @@ class AndroidInAppPurchases extends InAppPurchases {
       final isConnected = await _channel.invokeMethod<bool>('init_connection', {
         'enable_pending_purchases': enablePendingPurchases,
       });
-      return Result.success(isConnected!);
+      return Result.success(isConnected ?? false);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
     }
@@ -70,7 +85,7 @@ class AndroidInAppPurchases extends InAppPurchases {
   }
 
   @override
-  Future<Result<List<GooglePurchaseDetails>>> getPurchasedProducts() async {
+  Future<Result<List<GoogleRestoreDetails>>> getPurchasedProducts() async {
     try {
       final oneTimePurchasesMap = await _channel.invokeListMethod(
         'get_purchased_products',
@@ -85,7 +100,7 @@ class AndroidInAppPurchases extends InAppPurchases {
       final purchasedProducts = [
         ...?oneTimePurchasesMap,
         ...?subscriptionPurchasesMap
-      ].map((json) => GooglePurchaseDetails.fromJson(json)).toList();
+      ].map((json) => GoogleRestoreDetails.fromJson(json)).toList();
 
       return Result.success(purchasedProducts);
     } on PlatformException catch (exception) {
@@ -95,17 +110,49 @@ class AndroidInAppPurchases extends InAppPurchases {
 
   @override
   Future<Result<bool>> startPurchase(
-    InAppPurchase purchase, {
-    String? obfuscatedAccountId,
-  }) {
-    // TODO: implement startPurchase
-    throw UnimplementedError();
+    final GoogleInAppPurchase purchase, {
+    final String? obfuscatedAccountId,
+    final String? obfuscatedProfileId,
+  }) async {
+    try {
+      await _channel.invokeMethod('start_purchase', <String, dynamic>{
+        'sku': purchase.sku,
+        'obfuscatedAccountId': obfuscatedAccountId,
+        'obfuscatedProfileId': obfuscatedProfileId,
+      });
+
+      return const Result.success(true);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
   }
 
   @override
-  Future<Result<bool>> finishPurchase(PurchaseDetails purchase) {
-    // TODO: implement finishPurchase
-    throw UnimplementedError();
+  Future<Result<bool>> finishPurchase(
+    final GoogleTransactionDetails purchase, {
+    final bool isConsumable = false,
+  }) async {
+    try {
+      if (purchase.isAcknowledged) return const Result.success(true);
+
+      if (isConsumable) {
+        final consumedToken = await _channel.invokeMethod<String>(
+          'consume_product',
+          <String, dynamic>{'token': purchase.purchaseToken},
+        );
+
+        return Result.success(consumedToken != null);
+      }
+
+      final isAcknowledged = await _channel.invokeMethod<bool>(
+        'acknowledge_purchase',
+        <String, dynamic>{'token': purchase.purchaseToken},
+      );
+
+      return Result.success(isAcknowledged ?? false);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
   }
 
   Future<Result<List<GoogleInAppPurchase>>> getInAppPurchasesByType(

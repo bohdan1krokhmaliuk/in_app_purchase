@@ -1,6 +1,6 @@
 import 'package:in_app_purchase/models/base/discount.dart';
-import 'package:in_app_purchase/models/base/period_unit.dart';
 import 'package:in_app_purchase/models/base/period.dart';
+import 'package:in_app_purchase/models/base/period_unit.dart';
 
 enum DiscountType { introductory, subscription, unknown }
 
@@ -13,6 +13,17 @@ extension _DiscountTypeExt on DiscountType {
         return DiscountType.subscription;
       default:
         return DiscountType.unknown;
+    }
+  }
+
+  int get rawValue {
+    switch (this) {
+      case DiscountType.introductory:
+        return 0;
+      case DiscountType.subscription:
+        return 1;
+      default:
+        return -1;
     }
   }
 }
@@ -32,9 +43,22 @@ extension _PaymentModeExt on PaymentMode {
         return PaymentMode.unknown;
     }
   }
+
+  int get rawValue {
+    switch (this) {
+      case PaymentMode.payAsYouGo:
+        return 0;
+      case PaymentMode.payUpFront:
+        return 1;
+      case PaymentMode.freeTrial:
+        return 2;
+      default:
+        return -1;
+    }
+  }
 }
 
-class AppleDiscount extends Discount {
+class AppleDiscount implements Discount {
   @override
   final int numberOfPeriods;
 
@@ -76,4 +100,16 @@ class AppleDiscount extends Discount {
           numberOfUnits: json['numberOfUnits'],
           periodUnit: PeriodUnitExt.init(json['periodUnit']),
         );
+
+  Map<String, dynamic> toJSON() => {
+        'price': price,
+        'currency': currency,
+        'type': type.rawValue,
+        'identifier': identifier,
+        'localizedPrice': localizedPrice,
+        'numberOfPeriods': numberOfPeriods,
+        'paymentMode': paymentMode.rawValue,
+        'numberOfUnits': period.numberOfUnits,
+        'periodUnit': period.periodUnit.rawValue,
+      };
 }

@@ -2,7 +2,7 @@ import 'package:in_app_purchase/models/android/google_discount.dart';
 import 'package:in_app_purchase/models/base/in_app_purchase.dart';
 import 'package:in_app_purchase/models/base/period.dart';
 
-class GoogleInAppPurchase extends InAppPurchase {
+class GoogleInAppPurchase implements InAppPurchase {
   @override
   final String sku;
 
@@ -35,7 +35,7 @@ class GoogleInAppPurchase extends InAppPurchase {
 
   final String originalLocalizedPrice;
 
-  GoogleInAppPurchase.fromJSON(Map<String, dynamic> json)
+  GoogleInAppPurchase.fromJson(Map<String, dynamic> json)
       : sku = json['sku'],
         price = json['price'],
         title = json['title'],

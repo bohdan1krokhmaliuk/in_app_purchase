@@ -1,7 +1,7 @@
 import 'package:in_app_purchase/models/base/discount.dart';
 import 'package:in_app_purchase/models/base/period.dart';
 
-class GoogleDiscount extends Discount {
+class GoogleDiscount implements Discount {
   @override
   final int numberOfPeriods;
 

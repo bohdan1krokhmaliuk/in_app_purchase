@@ -12,11 +12,10 @@ class Method {
         const val consumeAllItems = "consumeAllItems"
         const val getPurchaseHistoryByType = "getPurchaseHistoryByType"
 
-        const val buyItemByType = "buyItemByType"
+        const val startPurchase = "start_purchase"
         const val updateSubscription = "updateSubscription"
-        const val acknowledgePurchase = "acknowledgePurchase"
-        const val consumeProduct = "consumeProduct"
-
+        const val acknowledgePurchase = "acknowledge_purchase"
+        const val consumeProduct = "consume_product"
     }
 }
 

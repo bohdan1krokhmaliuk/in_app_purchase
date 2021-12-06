@@ -3,7 +3,7 @@ import 'package:in_app_purchase/models/base/period.dart';
 import 'package:in_app_purchase/models/base/period_unit.dart';
 import 'package:in_app_purchase/models/ios/apple_discount.dart';
 
-class AppleInAppPurchase extends InAppPurchase {
+class AppleInAppPurchase implements InAppPurchase {
   @override
   final String sku;
 
@@ -44,7 +44,7 @@ class AppleInAppPurchase extends InAppPurchase {
   /// It's up to the logic in your app to decide which offer to present to the user.
   final List<AppleDiscount> discounts;
 
-  AppleInAppPurchase.fromJSON(Map<String, dynamic> json)
+  AppleInAppPurchase.fromJson(Map<String, dynamic> json)
       : sku = json['sku'],
         price = json['price'],
         title = json['title'],

@@ -81,7 +81,7 @@ class MethodCallHandler(
 
                 service?.getPurchaseHistoryByType(result, type)
             }
-            Method.buyItemByType -> {
+            Method.startPurchase -> {
                 val sku: String? = call.argument("sku")
                 val obfuscatedAccountId: String? = call.argument("obfuscatedAccountId")
                 val obfuscatedProfileId: String? = call.argument("obfuscatedProfileId")

@@ -37,4 +37,19 @@ extension PeriodUnitExt on PeriodUnit {
         return '';
     }
   }
+
+  int get rawValue {
+    switch (this) {
+      case PeriodUnit.day:
+        return 0;
+      case PeriodUnit.week:
+        return 1;
+      case PeriodUnit.month:
+        return 2;
+      case PeriodUnit.year:
+        return 3;
+      default:
+        return -1;
+    }
+  }
 }

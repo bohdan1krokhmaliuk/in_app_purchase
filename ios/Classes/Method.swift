@@ -14,15 +14,14 @@ enum Method: String {
     case setLogging = "enable_logging"
     case getInAppPurchases = "get_in_app_purchases"
     case getPurchasedProducts = "get_purchased_products"
+    case startPurchase = "start_purchase"
+    case finishTransaction = "finish_transaction"
     
-    case buyProduct = "buyProduct"
     case requestReceipt = "requestReceipt"
     case getPendingTransactions = "getPendingTransactions"
-    case finishTransaction = "finishTransaction"
+    case getCachedInAppPurchases = "getCachedInAppPurchases"
     case finishAllCompletedTransactions = "clearTransactions"
     case getAppStoreInitiatedProducts = "getAppStoreInitiatedProducts"
-    case getCachedInAppPurchases = "getCachedInAppPurchases"
-    
 }
 
 /// Outgoing methods
