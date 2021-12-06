@@ -6,16 +6,14 @@ class Method {
         const val initConnection = "init_connection"
         const val endConnection = "end_connection"
         const val enableLogging = "enable_logging"
-        const val getInAppPurchases = "get_in_app_purchases"
-        const val getPurchasedProductsByType = "get_purchased_products"
-
-        const val consumeAllItems = "consumeAllItems"
-        const val getPurchaseHistoryByType = "getPurchaseHistoryByType"
-
         const val startPurchase = "start_purchase"
-        const val updateSubscription = "updateSubscription"
-        const val acknowledgePurchase = "acknowledge_purchase"
         const val consumeProduct = "consume_product"
+        const val getInAppPurchases = "get_in_app_purchases"
+        const val acknowledgePurchase = "acknowledge_purchase"
+        const val getPurchasedProductsByType = "get_purchased_products"
+        const val consumeAllProducts = "consume_all_products"
+        const val updateSubscription = "update_subscription"
+        const val getPurchaseHistoryByType = "get_purchase_history"
     }
 }
 

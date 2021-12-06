@@ -8,15 +8,15 @@ class BillingClientMapperImpl : BillingClientMapper {
     override fun toJson(purchase: Purchase): HashMap<String, Any?> {
         val map = HashMap<String, Any?>()
 
-        // part of PurchaseHistory object
+        // part of PurchaseHistoryRecord object
         map["sku"] = purchase.skus.first()
         map["skus"] = purchase.skus
         map["date"] = purchase.purchaseTime
         map["quantity"] = purchase.quantity
         map["signature"] = purchase.signature
         map["receipt"] = purchase.originalJson
-        map["purchaseToken"] = purchase.purchaseToken
-        map["developerPayload"] = purchase.developerPayload
+        map["token"] = purchase.purchaseToken
+        map["payload"] = purchase.developerPayload
 
         // additional fields for purchase
         map["transactionId"] = purchase.orderId
@@ -40,11 +40,11 @@ class BillingClientMapperImpl : BillingClientMapper {
         map["skus"] = record.skus
         map["sku"] = record.skus.first()
         map["quantity"] = record.quantity
-        map["signatureAndroid"] = record.signature
-        map["purchaseToken"] = record.purchaseToken
-        map["transactionDate"] = record.purchaseTime
-        map["transactionReceipt"] = record.originalJson
-        map["developerPayload"] = record.developerPayload
+        map["signature"] = record.signature
+        map["token"] = record.purchaseToken
+        map["date"] = record.purchaseTime
+        map["receipt"] = record.originalJson
+        map["payload"] = record.developerPayload
 
         return map
     }

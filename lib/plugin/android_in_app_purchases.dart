@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
+import 'package:in_app_purchase/models/android/android_enums.dart';
 import 'package:in_app_purchase/models/android/google_in_app_purchase.dart';
+import 'package:in_app_purchase/models/android/google_purchase_history.dart';
 import 'package:in_app_purchase/models/android/google_transaction_details.dart';
 import 'package:in_app_purchase/models/base/result.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
@@ -18,6 +20,33 @@ abstract class AndroidInAppPurchases
     final GoogleInAppPurchase purchase, {
     final String? obfuscatedAccountId,
     final String? obfuscatedProfileId,
+  });
+
+  /// Returns list of in app purchases for [skus] with specified [type] filter
+  /// if specified
+  @override
+  Future<Result<List<GoogleInAppPurchase>>> getInAppPurchases(
+    final List<String> skus, {
+    final AndroidInAppPurchaseType? type,
+  });
+
+  // Android Specific methods
+
+  Future<Result<bool>> consumeAllItems(
+    final List<String> skus,
+    final AndroidInAppPurchaseType type,
+  );
+
+  Future<Result<bool>> updateSubscription(
+    final GoogleInAppPurchase newSubscription, {
+    required final String oldSubscriptionPurchaseToken,
+    final AndroidProrationMode? mode,
+    final String? obfuscatedAccountId,
+    final String? obfuscatedProfileId,
+  });
+
+  Future<Result<List<GooglePurchaseHistoryRecord>>> getPurchaseHistory({
+    final AndroidInAppPurchaseType? type,
   });
 }
 
@@ -60,23 +89,33 @@ class AndroidInAppPurchasesImpl implements AndroidInAppPurchases {
 
   @override
   Future<Result<List<GoogleInAppPurchase>>> getInAppPurchases(
-    final List<String> skus,
-  ) async {
+    final List<String> skus, {
+    final AndroidInAppPurchaseType? type,
+  }) async {
     try {
-      final oneTimeInAppPurchasesMap = await _channel.invokeListMethod(
-        'get_in_app_purchases',
-        {'skus': skus, 'type': AndroidInAppPurchaseType.oneTime.rawValue},
-      );
+      final purchases = [];
 
-      final subscriptionInAppPurchasesMap = await _channel.invokeListMethod(
-        'get_in_app_purchases',
-        {'skus': skus, 'type': AndroidInAppPurchaseType.subscription.rawValue},
-      );
+      if (type != AndroidInAppPurchaseType.subscription) {
+        final oneTimeInAppPurchasesMap = await _channel.invokeListMethod(
+          'get_in_app_purchases',
+          {'skus': skus, 'type': AndroidInAppPurchaseType.oneTime.rawValue},
+        );
+        purchases.addAll(oneTimeInAppPurchasesMap ?? []);
+      }
 
-      final inAppPurchases = [
-        ...?oneTimeInAppPurchasesMap,
-        ...?subscriptionInAppPurchasesMap
-      ].map((json) => GoogleInAppPurchase.fromJson(json)).toList();
+      if (type != AndroidInAppPurchaseType.oneTime) {
+        final subscriptionInAppPurchasesMap = await _channel.invokeListMethod(
+          'get_in_app_purchases',
+          {
+            'skus': skus,
+            'type': AndroidInAppPurchaseType.subscription.rawValue
+          },
+        );
+        purchases.addAll(subscriptionInAppPurchasesMap ?? []);
+      }
+
+      final inAppPurchases =
+          purchases.map((json) => GoogleInAppPurchase.fromJson(json)).toList();
 
       return Result.success(inAppPurchases);
     } on PlatformException catch (exception) {
@@ -85,22 +124,31 @@ class AndroidInAppPurchasesImpl implements AndroidInAppPurchases {
   }
 
   @override
-  Future<Result<List<GoogleRestoreDetails>>> getPurchasedProducts() async {
+  Future<Result<List<GoogleRestoreDetails>>> getPurchasedProducts({
+    final AndroidInAppPurchaseType? type,
+  }) async {
     try {
-      final oneTimePurchasesMap = await _channel.invokeListMethod(
-        'get_purchased_products',
-        {'type': AndroidInAppPurchaseType.oneTime.rawValue},
-      );
+      final purchasedItems = [];
 
-      final subscriptionPurchasesMap = await _channel.invokeListMethod(
-        'get_purchased_products',
-        {'type': AndroidInAppPurchaseType.subscription.rawValue},
-      );
+      if (type != AndroidInAppPurchaseType.subscription) {
+        final oneTimePurchasesMap = await _channel.invokeListMethod(
+          'get_purchased_products',
+          {'type': AndroidInAppPurchaseType.oneTime.rawValue},
+        );
+        purchasedItems.addAll(oneTimePurchasesMap ?? []);
+      }
 
-      final purchasedProducts = [
-        ...?oneTimePurchasesMap,
-        ...?subscriptionPurchasesMap
-      ].map((json) => GoogleRestoreDetails.fromJson(json)).toList();
+      if (type != AndroidInAppPurchaseType.oneTime) {
+        final subscriptionPurchasesMap = await _channel.invokeListMethod(
+          'get_purchased_products',
+          {'type': AndroidInAppPurchaseType.subscription.rawValue},
+        );
+        purchasedItems.addAll(subscriptionPurchasesMap ?? []);
+      }
+
+      final purchasedProducts = purchasedItems
+          .map((json) => GoogleRestoreDetails.fromJson(json))
+          .toList();
 
       return Result.success(purchasedProducts);
     } on PlatformException catch (exception) {
@@ -175,36 +223,73 @@ class AndroidInAppPurchasesImpl implements AndroidInAppPurchases {
     }
   }
 
-  Future<Result<List<GooglePurchaseDetails>>> getPurchasedProductsByType(
+  @override
+  Future<Result<bool>> consumeAllItems(
     final List<String> skus,
     final AndroidInAppPurchaseType type,
   ) async {
     try {
-      final inAppPurchasesMap = await _channel.invokeListMethod(
-        'get_purchased_products',
-        {'type': type.rawValue},
-      );
+      await _channel.invokeMethod('consume_all_products');
 
-      final purchasedProducts = inAppPurchasesMap
-          ?.map((json) => GooglePurchaseDetails.fromJson(json))
-          .toList();
-
-      return Result.success(purchasedProducts ?? []);
+      return const Result.success(true);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
     }
   }
-}
 
-enum AndroidInAppPurchaseType { subscription, oneTime }
+  @override
+  Future<Result<bool>> updateSubscription(
+    GoogleInAppPurchase newSubscription, {
+    required String oldSubscriptionPurchaseToken,
+    AndroidProrationMode? mode,
+    String? obfuscatedAccountId,
+    String? obfuscatedProfileId,
+  }) async {
+    try {
+      await _channel.invokeMethod('start_purchase', <String, dynamic>{
+        'sku': newSubscription.sku,
+        'prorationMode': mode?.rawValue,
+        'obfuscatedAccountId': obfuscatedAccountId,
+        'obfuscatedProfileId': obfuscatedProfileId,
+        'purchaseToken': oldSubscriptionPurchaseToken,
+      });
 
-extension AndroidInAppPurchaseTypeExt on AndroidInAppPurchaseType {
-  String get rawValue {
-    switch (this) {
-      case AndroidInAppPurchaseType.subscription:
-        return 'subs';
-      case AndroidInAppPurchaseType.oneTime:
-        return 'inapp';
+      return const Result.success(true);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
+  }
+
+  @override
+  Future<Result<List<GooglePurchaseHistoryRecord>>> getPurchaseHistory({
+    AndroidInAppPurchaseType? type,
+  }) async {
+    try {
+      final history = [];
+
+      if (type != AndroidInAppPurchaseType.subscription) {
+        final oneTimePurchasesMap = await _channel.invokeListMethod(
+          'get_purchase_history',
+          {'type': AndroidInAppPurchaseType.oneTime.rawValue},
+        );
+        history.addAll(oneTimePurchasesMap ?? []);
+      }
+
+      if (type != AndroidInAppPurchaseType.oneTime) {
+        final subscriptionPurchasesMap = await _channel.invokeListMethod(
+          'get_purchase_history',
+          {'type': AndroidInAppPurchaseType.subscription.rawValue},
+        );
+        history.addAll(subscriptionPurchasesMap ?? []);
+      }
+
+      final purchasedProducts = history
+          .map((json) => GooglePurchaseHistoryRecord.fromJson(json))
+          .toList();
+
+      return Result.success(purchasedProducts);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
     }
   }
 }

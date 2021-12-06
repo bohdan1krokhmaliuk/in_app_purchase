@@ -16,12 +16,11 @@ enum Method: String {
     case getPurchasedProducts = "get_purchased_products"
     case startPurchase = "start_purchase"
     case finishTransaction = "finish_transaction"
-    
-    case requestReceipt = "requestReceipt"
-    case getPendingTransactions = "getPendingTransactions"
-    case getCachedInAppPurchases = "getCachedInAppPurchases"
-    case finishAllCompletedTransactions = "clearTransactions"
-    case getAppStoreInitiatedProducts = "getAppStoreInitiatedProducts"
+    case requestReceipt = "request_receipt"
+    case getAppStoreInitiatedProducts = "app_store_initiated_purchases"
+    case getCachedInAppPurchases = "cached_in_app_purchases"
+    case getPendingTransactions = "get_pending_transactions"
+    case finishAllCompletedTransactions = "finish_completed_transactions"
 }
 
 /// Outgoing methods

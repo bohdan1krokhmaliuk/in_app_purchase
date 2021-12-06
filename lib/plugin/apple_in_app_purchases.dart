@@ -16,6 +16,20 @@ abstract class AppleInAppPurchases
     final ApplePaymentOffer? offer,
     final String? obfuscatedAccountId,
   });
+
+  // Apple specific methods
+
+  Future<Result<String>> requestReceipt();
+
+  Future<Result<bool>> finishAllCompletedTransactions();
+
+  Future<Result<List<AppleTransactionDetails>>> getPendingTransactions();
+
+  Future<Result<List<AppleInAppPurchase>>> getCachedInAppPurchases();
+
+  Future<Result<List<AppleInAppPurchase>>> getAppStoreInitiatedInAppPurchases(
+    final List<String> skus,
+  );
 }
 
 class AppleInAppPurchasesImpl implements AppleInAppPurchases {
@@ -122,6 +136,84 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
       );
 
       return Result.success(isFinished ?? false);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
+  }
+
+  @override
+  Future<Result<String>> requestReceipt() async {
+    try {
+      final receipt = await _channel.invokeMethod<String>(
+        'request_receipt',
+      );
+
+      return Result.success(receipt ?? '');
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
+  }
+
+  @override
+  Future<Result<List<AppleInAppPurchase>>> getAppStoreInitiatedInAppPurchases(
+    List<String> skus,
+  ) async {
+    try {
+      final inAppPurchasesMap = await _channel.invokeListMethod(
+        'app_store_initiated_purchases',
+      );
+
+      final inAppPurchases = inAppPurchasesMap
+          ?.map((json) => AppleInAppPurchase.fromJson(json))
+          .toList();
+
+      return Result.success(inAppPurchases ?? []);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
+  }
+
+  @override
+  Future<Result<List<AppleInAppPurchase>>> getCachedInAppPurchases() async {
+    try {
+      final inAppPurchasesMap = await _channel.invokeListMethod(
+        'cached_in_app_purchases',
+      );
+
+      final inAppPurchases = inAppPurchasesMap
+          ?.map((json) => AppleInAppPurchase.fromJson(json))
+          .toList();
+
+      return Result.success(inAppPurchases ?? []);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
+  }
+
+  @override
+  Future<Result<bool>> finishAllCompletedTransactions() async {
+    try {
+      await _channel.invokeListMethod('finish_completed_transactions');
+
+      return const Result.success(true);
+    } on PlatformException catch (exception) {
+      return Result.failed(exception);
+    }
+  }
+
+  @override
+  Future<Result<List<AppleTransactionDetails>>> getPendingTransactions() async {
+    try {
+      final inAppPurchasesMap = await _channel.invokeListMethod(
+        'get_pending_transactions',
+      );
+
+      // TODO: convertWithMapper
+      final transactions = inAppPurchasesMap
+          ?.map((json) => AppleTransactionDetails.fromJson(json))
+          .toList();
+
+      return Result.success(transactions ?? []);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
     }

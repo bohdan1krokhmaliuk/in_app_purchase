@@ -53,7 +53,7 @@ class MethodCallHandler(
                 service?.initConnection(result)
             }
             Method.endConnection -> service?.endConnection(result)
-            Method.consumeAllItems -> service?.consumeAllItems(result)
+            Method.consumeAllProducts -> service?.consumeAllItems(result)
             Method.getInAppPurchases -> {
                 val type: String? = call.argument("type")
                 if( type == null || (type != SkuType.INAPP && type != SkuType.SUBS) ){
