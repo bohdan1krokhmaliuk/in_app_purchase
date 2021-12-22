@@ -208,9 +208,12 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
         'get_pending_transactions',
       );
 
-      // TODO: convertWithMapper
       final transactions = inAppPurchasesMap
-          ?.map((json) => AppleTransactionDetails.fromJson(json))
+          ?.map<ApplePurchaseDetails>(
+            (json) => json['originalTransactionIdentifier'] != null
+                ? AppleRestoreDetails.fromJson(json)
+                : ApplePurchaseDetails.fromJson(json),
+          )
           .toList();
 
       return Result.success(transactions ?? []);
