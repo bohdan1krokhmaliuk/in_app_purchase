@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 void main() {
   runApp(const MyApp());

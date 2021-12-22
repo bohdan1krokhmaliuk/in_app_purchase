@@ -13,10 +13,21 @@ protocol ReceiptService {
 }
 
 class ReceiptServiceImpl :  NSObject, SKRequestDelegate, ReceiptService {
+    override init() {
+        self.errorHandler = ErrorHandlerImpl()
+    }
+    
+    private let errorHandler: ErrorHandler
     private var refreshReceiptCallbacks = [((String?, FlutterError?) -> ())]()
+    private var isReceiptPresent: Bool {
+        get {
+            let canReach = try? Bundle.main.appStoreReceiptURL?.checkResourceIsReachable()
+            return canReach ?? false
+        }
+    }
     
     func requestReceiptData(_ compeletion: @escaping (String?, FlutterError?)->()) {
-        if isReceiptPresent(){
+        if isReceiptPresent {
             let refreshReceiptRequest = SKReceiptRefreshRequest()
             refreshReceiptRequest.delegate = self
             refreshReceiptRequest.start()
@@ -26,16 +37,7 @@ class ReceiptServiceImpl :  NSObject, SKRequestDelegate, ReceiptService {
         }
     }
     
-    private func isReceiptPresent() -> Bool {
-        if let receiptURl = Bundle.main.appStoreReceiptURL{
-            if let canReach = try? receiptURl.checkResourceIsReachable() {
-                return canReach
-            }
-        }
-        return false
-    }
-    
-    private func applyReceiptData(_ compeletion: (String?, FlutterError?)->()) {
+    private func applyReceiptData(_ compeletion: (String?, FlutterError?) -> Void) {
         do {
             let receiptData = try Data(contentsOf: Bundle.main.appStoreReceiptURL!, options: .alwaysMapped)
             compeletion(receiptData.base64EncodedString(options: []), nil)
@@ -43,28 +45,26 @@ class ReceiptServiceImpl :  NSObject, SKRequestDelegate, ReceiptService {
         catch {
             compeletion(nil, buildError("Failed to fetch a receipt"))
         }
-        
     }
     
     func requestDidFinish(_ request: SKRequest) {
         if request is SKReceiptRefreshRequest && !refreshReceiptCallbacks.isEmpty {
-            if isReceiptPresent() {
+            if isReceiptPresent {
                 applyReceiptData() { (receipt,error) -> () in
-                    for callback in refreshReceiptCallbacks {
-                        callback(receipt,error)
-                    }
+                    refreshReceiptCallbacks.forEach() {(callback) -> () in callback(receipt,error)}
                 }
             }
             else {
-                for callback in refreshReceiptCallbacks {
-                    callback(nil, buildError("Receipt refreshed, but still not available"))
-                }
+                refreshReceiptCallbacks.forEach(
+                    {(callback) -> () in callback(nil, buildError("Receipt refreshed, but still not available"))}
+                )
             }
+            
             refreshReceiptCallbacks.removeAll()
         }
     }
     
     func buildError(_ message: String) -> FlutterError {
-        return FlutterError(code: "E_RECEIPT_ERROR", message: message, details: nil)
+        return errorHandler.buildFlutterError(PurchaseError.receiptError, message, nil)
     }
 }

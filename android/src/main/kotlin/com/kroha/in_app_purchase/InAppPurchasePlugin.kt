@@ -1,5 +1,7 @@
 package com.kroha.in_app_purchase
 
+import com.kroha.in_app_purchase.billingClientService.BillingClientServiceFactory
+import com.kroha.in_app_purchase.errorHandler.ErrorHandlerImpl
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -7,18 +9,13 @@ import io.flutter.plugin.common.MethodChannel
 
 class InAppPurchasePlugin: FlutterPlugin, ActivityAware {
   private lateinit var channel : MethodChannel
-  private lateinit var billingClient: AndroidBillingClient
+  private lateinit var handler: MethodCallHandler
+  private val channelId = "in_app_purchase"
 
-  companion object {
-    private const val channelId = "in_app_purchase"
-  }
-
-  override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, channelId)
-    billingClient = AndroidBillingClient()
-    billingClient.setup(channel, flutterPluginBinding.applicationContext)
-
-    channel.setMethodCallHandler(billingClient)
+  override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    channel = MethodChannel(binding.binaryMessenger, channelId)
+    handler = MethodCallHandler(channel, ErrorHandlerImpl(), binding.applicationContext, BillingClientServiceFactory())
+    channel.setMethodCallHandler(handler)
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -26,11 +23,11 @@ class InAppPurchasePlugin: FlutterPlugin, ActivityAware {
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-    billingClient.setActivity(binding.activity)
+    handler.setActivity(binding.activity)
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
-    onDetachedFromActivity()
+    handler.setActivity(null)
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
@@ -38,6 +35,7 @@ class InAppPurchasePlugin: FlutterPlugin, ActivityAware {
   }
 
   override fun onDetachedFromActivity() {
-    billingClient.setActivity(null)
+    handler.setActivity(null)
+    handler.onDetachedFromActivity()
   }
 }
