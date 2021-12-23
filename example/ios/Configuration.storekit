@@ -34,33 +34,33 @@
   ],
   "products" : [
     {
-      "displayPrice" : "0.99",
+      "displayPrice" : "4.99",
       "familyShareable" : false,
       "internalID" : "E777158A",
       "localizations" : [
         {
-          "description" : "Purchase 100 coins",
-          "displayName" : "100 coins",
+          "description" : "Purchase 20 coins",
+          "displayName" : "20 coins",
           "locale" : "en_US"
         }
       ],
       "productID" : "com.consumable.coins",
-      "referenceName" : "100 coins (consumable)",
+      "referenceName" : "20 coins (consumable)",
       "type" : "Consumable"
     },
     {
-      "displayPrice" : "100.0",
+      "displayPrice" : "29.99",
       "familyShareable" : false,
       "internalID" : "9FB71009",
       "localizations" : [
         {
-          "description" : "Purchase 50 bills",
-          "displayName" : "50 bills",
+          "description" : "Purchase 30 bills",
+          "displayName" : "30 bills",
           "locale" : "en_US"
         }
       ],
       "productID" : "com.consumable.bills",
-      "referenceName" : "50 bills (consumable)",
+      "referenceName" : "30 bills (consumable)",
       "type" : "Consumable"
     },
     {
