@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CoinIcon extends StatelessWidget {
-  const CoinIcon({Key? key, this.radius = 30.0}) : super(key: key);
+class AdsFreeIcon extends StatelessWidget {
+  const AdsFreeIcon({Key? key, this.radius = 30.0}) : super(key: key);
   final double radius;
 
   @override
@@ -11,11 +11,11 @@ class CoinIcon extends StatelessWidget {
         alignment: Alignment.center,
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.amber,
+          color: Colors.green,
         ),
         child: Icon(
-          Icons.monetization_on_outlined,
-          color: Colors.amber[200],
+          Icons.color_lens_outlined,
+          color: Colors.white,
           size: radius,
         ),
       );

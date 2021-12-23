@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class Bill extends StatelessWidget {
-  const Bill({Key? key, this.width = 35.0}) : super(key: key);
+class BillIcon extends StatelessWidget {
+  const BillIcon({Key? key, this.width = 35.0}) : super(key: key);
   final double width;
 
   @override

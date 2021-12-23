@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/plugin/apple_in_app_purchases.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 import 'package:in_app_purchase_example/components/consumables_card.dart';
+import 'package:in_app_purchase_example/components/non_consumable_card.dart';
 import 'package:in_app_purchase_example/components/status_card.dart';
 
 void main() {
@@ -46,12 +47,19 @@ class _MyAppState extends State<MyApp> {
         body: ListView(
           children: [
             Padding(
+              key: const ValueKey('Status'),
               padding: cardInsets,
               child: StatusCard(isPluginInitialized: isPluginInitialized),
             ),
             Padding(
+              key: const ValueKey('Consumables'),
               padding: cardInsets,
               child: ConsumablesCard(purchasesPlugin: purchasesPlugin),
+            ),
+            Padding(
+              key: const ValueKey('Non-Consumables'),
+              padding: cardInsets,
+              child: NonConsumablesCard(purchasesPlugin: purchasesPlugin),
             ),
           ],
         ),

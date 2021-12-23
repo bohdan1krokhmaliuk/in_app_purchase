@@ -357,7 +357,7 @@ extension InAppPurchasesServiceImpl: SKProductsRequestDelegate {
             }
             
             logger.log("[InAppPurchase] request succeed")
-            result(inAppPurchasesCache.map(mapper.toJson))
+            result(response.products.map(mapper.toJson))
         }
     }
     

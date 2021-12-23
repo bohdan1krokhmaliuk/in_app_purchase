@@ -7,7 +7,7 @@ import 'package:in_app_purchase/models/base/transaction_state.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 import 'package:in_app_purchase_example/components/bill.dart';
 import 'package:in_app_purchase_example/components/coin.dart';
-import 'package:in_app_purchase_example/components/purchase_card.dart';
+import 'package:in_app_purchase_example/components/product_component.dart';
 import 'package:in_app_purchase_example/components/sku_icon.dart';
 import 'package:in_app_purchase_example/skus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,7 +23,7 @@ class ConsumablesCard extends StatefulWidget {
 }
 
 class _ConsumablesCardState extends State<ConsumablesCard> {
-  List<InAppPurchase> availablePurchases = [];
+  List<InAppPurchase> availableProducts = [];
   StreamSubscription<TransactionDetails>? listener;
 
   bool isInitialized = false;
@@ -70,31 +70,31 @@ class _ConsumablesCardState extends State<ConsumablesCard> {
                       Text('$coins', style: _counterStyle),
                       const SizedBox(width: 5.0),
                       GestureDetector(
-                        child: const Coin(),
+                        child: const CoinIcon(),
                         onTap: () => _spend(Sku.coins.id, context),
                       ),
                       const SizedBox(width: 40.0),
                       Text('$bills', style: _counterStyle),
                       const SizedBox(width: 5.0),
                       GestureDetector(
-                        child: const Bill(),
+                        child: const BillIcon(),
                         onTap: () => _spend(Sku.bill.id, context),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   const Divider(thickness: 1.0, indent: 16.0, endIndent: 16.0),
-                  PurchaseCard(
-                    text: availablePurchases.first.title,
-                    price: availablePurchases.first.localizedPrice,
-                    icon: SkuIcon(sku: availablePurchases.first.sku),
-                    callback: _startPurchase(availablePurchases.first),
+                  ProductComponent(
+                    text: availableProducts.first.title,
+                    price: availableProducts.first.localizedPrice,
+                    icon: SkuIcon(sku: availableProducts.first.sku),
+                    callback: _startPurchase(availableProducts.first),
                   ),
-                  PurchaseCard(
-                    text: availablePurchases.last.title,
-                    price: availablePurchases.last.localizedPrice,
-                    icon: SkuIcon(sku: availablePurchases.last.sku),
-                    callback: _startPurchase(availablePurchases.last),
+                  ProductComponent(
+                    text: availableProducts.last.title,
+                    price: availableProducts.last.localizedPrice,
+                    icon: SkuIcon(sku: availableProducts.last.sku),
+                    callback: _startPurchase(availableProducts.last),
                   ),
                 ],
               )
@@ -119,7 +119,7 @@ class _ConsumablesCardState extends State<ConsumablesCard> {
     final result = await widget.purchasesPlugin.getInAppPurchases(
       Sku.consumableIdentifiers,
     );
-    if (result.hasValue) availablePurchases = result.value;
+    if (result.hasValue) availableProducts = result.value;
   }
 
   VoidCallback _startPurchase(final InAppPurchase product) => () {

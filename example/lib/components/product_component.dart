@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class PurchaseCard extends StatelessWidget {
-  const PurchaseCard({
+class ProductComponent extends StatelessWidget {
+  const ProductComponent({
     Key? key,
     required final this.text,
     required final this.price,
     required final this.callback,
     final this.icon,
-    final this.textStyle = const TextStyle(fontSize: 18.0, color: Colors.black),
+    final this.textStyle = const TextStyle(fontSize: 16.0, color: Colors.black),
   }) : super(key: key);
 
   final Widget? icon;
@@ -15,7 +15,7 @@ class PurchaseCard extends StatelessWidget {
   final String price;
 
   final TextStyle textStyle;
-  final VoidCallback callback;
+  final VoidCallback? callback;
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +26,14 @@ class PurchaseCard extends StatelessWidget {
       child: Row(
         children: [
           if (icon != null) icon!,
-          const SizedBox(width: 10.0),
-          Text(text, style: textStyle),
-          const Spacer(),
+          const SizedBox(width: 5.0),
+          Expanded(
+            child: Text(
+              text,
+              style: textStyle,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           TextButton(
             onPressed: callback,
             child: Text(price, style: textStyle),

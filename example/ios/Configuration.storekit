@@ -69,13 +69,13 @@
       "internalID" : "8FF13E75",
       "localizations" : [
         {
-          "description" : "",
-          "displayName" : "",
+          "description" : "Purchase ads free access",
+          "displayName" : "No more ads",
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.non.consumable.first",
-      "referenceName" : "Non consumable first",
+      "productID" : "com.non.consumable.ads.free",
+      "referenceName" : "Ads free",
       "type" : "NonConsumable"
     },
     {
@@ -84,18 +84,19 @@
       "internalID" : "54824C90",
       "localizations" : [
         {
-          "description" : "",
-          "displayName" : "",
+          "description" : "Buy new premium feature",
+          "displayName" : "Premium feature",
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.non.consumable.second",
-      "referenceName" : "Non consumable second",
+      "productID" : "com.non.consumable.premium.feature",
+      "referenceName" : "Premium feature",
       "type" : "NonConsumable"
     }
   ],
   "settings" : {
-
+    "_compatibilityTimeRate" : 6,
+    "_timeRate" : 15
   },
   "subscriptionGroups" : [
     {

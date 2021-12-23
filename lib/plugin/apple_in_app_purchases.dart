@@ -98,8 +98,11 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
       );
 
       final inAppPurchases = inAppPurchasesMap
-          ?.map((json) =>
-              AppleInAppPurchase.fromJson(Map<String, dynamic>.from(json)))
+          ?.map(
+            (json) => AppleInAppPurchase.fromJson(
+              Map<String, dynamic>.from(json),
+            ),
+          )
           .toList();
 
       return Result.success(inAppPurchases ?? []);
@@ -116,7 +119,9 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
       );
 
       final purchasedProducts = inAppPurchasesMap
-          ?.map((json) => AppleRestoreDetails.fromJson(json))
+          ?.map((json) => AppleRestoreDetails.fromJson(
+                Map<String, dynamic>.from(json),
+              ))
           .toList();
 
       return Result.success(purchasedProducts ?? []);
