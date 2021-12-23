@@ -1,0 +1,240 @@
+{
+  "identifier" : "6964BDBD",
+  "nonRenewingSubscriptions" : [
+    {
+      "displayPrice" : "14.99",
+      "familyShareable" : false,
+      "internalID" : "933C290A",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.non.renewing.fist",
+      "referenceName" : "Non renewing first",
+      "type" : "NonRenewingSubscription"
+    },
+    {
+      "displayPrice" : "99.99",
+      "familyShareable" : false,
+      "internalID" : "49D8C88C",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.non.renewing.second",
+      "referenceName" : "Non renewing second",
+      "type" : "NonRenewingSubscription"
+    }
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "E777158A",
+      "localizations" : [
+        {
+          "description" : "Purchase 100 coins",
+          "displayName" : "100 coins",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.consumable.coins",
+      "referenceName" : "100 coins (consumable)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "100.0",
+      "familyShareable" : false,
+      "internalID" : "9FB71009",
+      "localizations" : [
+        {
+          "description" : "Purchase 50 bills",
+          "displayName" : "50 bills",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.consumable.bills",
+      "referenceName" : "50 bills (consumable)",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "19.99",
+      "familyShareable" : false,
+      "internalID" : "8FF13E75",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.non.consumable.first",
+      "referenceName" : "Non consumable first",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "154.99",
+      "familyShareable" : false,
+      "internalID" : "54824C90",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.non.consumable.second",
+      "referenceName" : "Non consumable second",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "7645009D",
+      "localizations" : [
+
+      ],
+      "name" : "Auto renewable group first",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "displayPrice" : "0.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "FD8D1723",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.auto.renewable.first",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Group first subscription first",
+          "subscriptionGroupID" : "7645009D",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+            {
+              "displayPrice" : "0.99",
+              "internalID" : "14F0A693",
+              "numberOfPeriods" : 1,
+              "offerID" : "com.first.year.offer",
+              "paymentMode" : "payAsYouGo",
+              "referenceName" : "First year for 1 dollar",
+              "subscriptionPeriod" : "P1Y"
+            },
+            {
+              "internalID" : "3690B26B",
+              "offerID" : "com.first.year.free",
+              "paymentMode" : "free",
+              "referenceName" : "First year free",
+              "subscriptionPeriod" : "P3D"
+            },
+            {
+              "displayPrice" : "4.99",
+              "internalID" : "50B1530C",
+              "numberOfPeriods" : 1,
+              "offerID" : "com.first.year.pay.as.you.go",
+              "paymentMode" : "payAsYouGo",
+              "referenceName" : "First year pay as you go",
+              "subscriptionPeriod" : "P1Y"
+            }
+          ],
+          "displayPrice" : "9.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "435D4643",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.auto.renewable.first",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Group first subscription second + 1st year offer",
+          "subscriptionGroupID" : "7645009D",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    },
+    {
+      "id" : "BD931A64",
+      "localizations" : [
+
+      ],
+      "name" : "Auto renewable group second",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "displayPrice" : "0.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "7C2D1AA6",
+          "introductoryOffer" : {
+            "internalID" : "9D8A36AB",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.auto.renewable.first.intro",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Group second subscription first + intro",
+          "subscriptionGroupID" : "BD931A64",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "displayPrice" : "9.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "91C4C5EF",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.temporary.id",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Group second subscription second + family sharing",
+          "subscriptionGroupID" : "BD931A64",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 1,
+    "minor" : 1
+  }
+}

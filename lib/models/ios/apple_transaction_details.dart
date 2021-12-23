@@ -1,12 +1,25 @@
 import 'package:in_app_purchase/models/base/transaction_details.dart';
 import 'package:in_app_purchase/models/base/transaction_state.dart';
 
-abstract class AppleTransactionDetails implements TransactionDetails {
+class AppleTransactionDetails implements TransactionDetails {
   const AppleTransactionDetails._({
     required this.sku,
     required this.state,
     this.obfuscatedAccountId,
   });
+
+  factory AppleTransactionDetails.fromJson(final Map<String, dynamic> json) =>
+      AppleTransactionDetails._(
+        sku: json['sku'],
+        obfuscatedAccountId: json['applicationUsername'],
+        state: TransactionStateExt.fromIOSState(json['transactionStateIOS']),
+      );
+
+  factory AppleTransactionDetails.userCanceled(final String sku) =>
+      AppleTransactionDetails._(
+        sku: sku,
+        state: TransactionState.userCanceled,
+      );
 
   @override
   final String sku;

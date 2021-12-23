@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/models/base/result.dart';
+import 'package:in_app_purchase/models/base/transaction_state.dart';
 import 'package:in_app_purchase/models/ios/apple_in_app_purchase.dart';
 import 'package:in_app_purchase/models/ios/apple_payment_offer.dart';
 import 'package:in_app_purchase/models/ios/apple_transaction_details.dart';
@@ -7,8 +10,8 @@ import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 
 abstract class AppleInAppPurchases
     implements
-        InAppPurchases<AppleInAppPurchase, ApplePurchaseDetails,
-            AppleRestoreDetails> {
+        InAppPurchases<AppleInAppPurchase, AppleTransactionDetails,
+            ApplePurchaseDetails, AppleRestoreDetails> {
   @override
   Future<Result<bool>> startPurchase(
     final AppleInAppPurchase purchase, {
@@ -33,7 +36,21 @@ abstract class AppleInAppPurchases
 }
 
 class AppleInAppPurchasesImpl implements AppleInAppPurchases {
+  AppleInAppPurchasesImpl() {
+    _channel.setMethodCallHandler(_handler);
+  }
+
   static const MethodChannel _channel = MethodChannel('in_app_purchase');
+  final _controller = StreamController<AppleTransactionDetails>.broadcast();
+
+  @override
+  Stream<AppleTransactionDetails> get purchasesDetailsStream =>
+      _controller.stream;
+
+  @override
+  Stream<AppleTransactionDetails> purchasesDetailsStreamFor(final String sku) {
+    return purchasesDetailsStream.where((details) => details.sku == sku);
+  }
 
   @override
   Future<Result<bool>> initConnection({
@@ -60,7 +77,10 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
   @override
   Future<Result<bool>> enableLogging(final bool enable) async {
     try {
-      final isEnabled = await _channel.invokeMethod<bool>('enable_logging');
+      final isEnabled = await _channel.invokeMethod<bool>(
+        'enable_logging',
+        {'enable': enable},
+      );
       return Result.success(isEnabled!);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
@@ -78,7 +98,8 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
       );
 
       final inAppPurchases = inAppPurchasesMap
-          ?.map((json) => AppleInAppPurchase.fromJson(json))
+          ?.map((json) =>
+              AppleInAppPurchase.fromJson(Map<String, dynamic>.from(json)))
           .toList();
 
       return Result.success(inAppPurchases ?? []);
@@ -219,6 +240,51 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
       return Result.success(transactions ?? []);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
+    }
+  }
+
+  Future<dynamic> _handler(final MethodCall call) async {
+    final json = Map<String, dynamic>.from(call.arguments);
+    switch (call.method) {
+      case 'purchase-updated':
+        return _handlePurchaseDetails(json);
+      case 'purchase-error':
+        return _handlePurchaseError(json);
+      default:
+        return;
+      // TODO: throw after handling other callbacks
+      // throw PlatformException(code: 'Unknown method handler behavior');
+    }
+  }
+
+  void _handlePurchaseDetails(final Map<String, dynamic> json) {
+    final state = TransactionStateExt.fromIOSState(json['transactionStateIOS']);
+
+    // TODO: mapper?
+    switch (state) {
+      case TransactionState.deffered:
+      case TransactionState.purchasing:
+        _controller.add(AppleTransactionDetails.fromJson(json));
+        break;
+      case TransactionState.purchased:
+        final details = json['originalTransactionIdentifier'] != null
+            ? AppleRestoreDetails.fromJson(json)
+            : ApplePurchaseDetails.fromJson(json);
+        _controller.add(details);
+        break;
+      // TODO:
+      default:
+        throw 'not_handled';
+    }
+  }
+
+  void _handlePurchaseError(final Map<String, dynamic> json) {
+    switch (json['code']) {
+      case 'E_USER_CANCELLED':
+        _controller.add(AppleTransactionDetails.userCanceled(json['sku']));
+        break;
+      // TODO:
+      default:
     }
   }
 }

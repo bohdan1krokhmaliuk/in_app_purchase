@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/models/android/android_enums.dart';
 import 'package:in_app_purchase/models/android/google_in_app_purchase.dart';
@@ -8,8 +10,8 @@ import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 
 abstract class AndroidInAppPurchases
     implements
-        InAppPurchases<GoogleInAppPurchase, GooglePurchaseDetails,
-            GoogleRestoreDetails> {
+        InAppPurchases<GoogleInAppPurchase, GoogleTransactionDetails,
+            GooglePurchaseDetails, GoogleRestoreDetails> {
   @override
   Future<Result<bool>> initConnection({
     final bool enablePendingPurchases = true,
@@ -51,7 +53,21 @@ abstract class AndroidInAppPurchases
 }
 
 class AndroidInAppPurchasesImpl implements AndroidInAppPurchases {
+  AndroidInAppPurchasesImpl() {
+    _channel.setMethodCallHandler(_handler);
+  }
+
   static const MethodChannel _channel = MethodChannel('in_app_purchase');
+  final _controller = StreamController<GooglePurchaseDetails>.broadcast();
+
+  @override
+  Stream<GoogleTransactionDetails> get purchasesDetailsStream =>
+      _controller.stream;
+
+  @override
+  Stream<GoogleTransactionDetails> purchasesDetailsStreamFor(final String sku) {
+    return purchasesDetailsStream.where((details) => details.sku == sku);
+  }
 
   @override
   Future<Result<bool>> initConnection({
@@ -290,6 +306,19 @@ class AndroidInAppPurchasesImpl implements AndroidInAppPurchases {
       return Result.success(purchasedProducts);
     } on PlatformException catch (exception) {
       return Result.failed(exception);
+    }
+  }
+
+  Future<dynamic> _handler(final MethodCall call) async {
+    switch (call.method) {
+      case 'purchase-updated':
+        final json = Map<String, dynamic>.from(call.arguments);
+        final details = json['originalTransactionIdentifier'] != null
+            ? GoogleRestoreDetails.fromJson(json)
+            : GooglePurchaseDetails.fromJson(json);
+        return _controller.add(details);
+      default:
+        throw PlatformException(code: 'Unknown method handler behavior');
     }
   }
 }

@@ -52,10 +52,12 @@ class AppleInAppPurchase implements InAppPurchase {
         description = json['description'],
         localizedPrice = json['localizedPrice'],
         subscriptionGroupId = json['subscriptionGroupId'],
-        subscriptionPeriod = Period(
-          periodUnit: PeriodUnitExt.init(json['subscriptionPeriodUnit']),
-          numberOfUnits: json['subscriptionPeriodNumber'],
-        ),
+        subscriptionPeriod = json['subscriptionPeriodUnit'] == null
+            ? null
+            : Period(
+                periodUnit: PeriodUnitExt.init(json['subscriptionPeriodUnit']),
+                numberOfUnits: json['subscriptionPeriodNumber'],
+              ),
         discounts = _convertFromList(
           List<Map<String, dynamic>>.from(json['discounts']),
         ),

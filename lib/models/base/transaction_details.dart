@@ -10,6 +10,8 @@ abstract class TransactionDetails {
   TransactionState get state;
 }
 
+abstract class ProcessingDetails implements TransactionDetails {}
+
 // TODO:
 /// Identifies failed product details
 /// Possible [TransactionState] values: .canceled, .errored
