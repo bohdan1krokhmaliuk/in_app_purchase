@@ -7,13 +7,13 @@
       "internalID" : "933C290A",
       "localizations" : [
         {
-          "description" : "Premium subscription",
-          "displayName" : "Premium subscription",
+          "description" : "Basic subscription",
+          "displayName" : "Basic subscription",
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.non.renewing.premium",
-      "referenceName" : "Non renewing premium",
+      "productID" : "com.non.renewing.basic",
+      "referenceName" : "Non renewing basic",
       "type" : "NonRenewingSubscription"
     },
     {
@@ -22,13 +22,13 @@
       "internalID" : "49D8C88C",
       "localizations" : [
         {
-          "description" : "Super premium subscription",
-          "displayName" : "Premium+ subscription",
+          "description" : "Premium subscription",
+          "displayName" : "Premium subscription",
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.non.renewing.premium.plus",
-      "referenceName" : "Non renewing premium plus",
+      "productID" : "com.non.renewing.premium",
+      "referenceName" : "Non renewing premium",
       "type" : "NonRenewingSubscription"
     }
   ],

@@ -4,16 +4,16 @@ class Sku {
   static const coins = Sku._('com.consumable.coins');
   static const bill = Sku._('com.consumable.bills');
 
+  static const basicSub = Sku._('com.non.renewing.basic');
   static const premiumSub = Sku._('com.non.renewing.premium');
-  static const premiumPlusSub = Sku._('com.non.renewing.premium.plus');
 
   static const adsFree = Sku._('com.non.consumable.ads.free');
   static const premiumFeature = Sku._('com.non.consumable.premium.feature');
 
   static List<String> get consumableIdentifiers => [coins.id, bill.id];
   static List<String> get nonRenewingIdentifiers => [
+        basicSub.id,
         premiumSub.id,
-        premiumPlusSub.id,
       ];
   static List<String> get nonConsumableIdentifiers => [
         adsFree.id,

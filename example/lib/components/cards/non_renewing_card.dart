@@ -190,10 +190,10 @@ class _NonRenewingCardState extends State<NonRenewingCard> with SnackBarMixin {
   }
 
   String skuName(final String sku) {
-    if (sku == Sku.premiumSub.id) {
+    if (sku == Sku.basicSub.id) {
+      return 'Basic';
+    } else if (sku == Sku.premiumSub.id) {
       return 'Premium';
-    } else if (sku == Sku.premiumPlusSub.id) {
-      return 'Premium+';
     }
 
     return '';

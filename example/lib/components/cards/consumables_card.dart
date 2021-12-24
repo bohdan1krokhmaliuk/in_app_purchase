@@ -198,6 +198,6 @@ class _ConsumablesCardState extends State<ConsumablesCard> with SnackBarMixin {
     final BuildContext context,
   ) async {
     final icon = SkuIcon(sku: sku, dimension: 23);
-    showSnackbar('Buy more', color: Colors.red, icon: icon);
+    showSnackbar('Buy more', color: Colors.orange, icon: icon);
   }
 }
