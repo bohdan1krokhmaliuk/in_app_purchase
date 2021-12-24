@@ -56,21 +56,15 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
                   const Text('Non-Consumables', style: _titleStyle),
                   const SizedBox(height: 11),
                   const Divider(thickness: 1.0, indent: 16.0, endIndent: 16.0),
-                  ProductComponent(
-                    price: _isProductPurchased(availableProducts.first.sku)
-                        ? 'Purchased'
-                        : availableProducts.first.localizedPrice,
-                    text: availableProducts.first.title,
-                    icon: SkuIcon(sku: availableProducts.first.sku),
-                    callback: _startPurchase(availableProducts.first, context),
-                  ),
-                  ProductComponent(
-                    price: _isProductPurchased(availableProducts.last.sku)
-                        ? 'Purchased'
-                        : availableProducts.last.localizedPrice,
-                    text: availableProducts.last.title,
-                    icon: SkuIcon(sku: availableProducts.last.sku),
-                    callback: _startPurchase(availableProducts.last, context),
+                  ...availableProducts.map<ProductComponent>(
+                    (p) => ProductComponent(
+                      text: p.title,
+                      icon: SkuIcon(sku: p.sku),
+                      callback: _startPurchase(p, context),
+                      price: _isProductPurchased(p.sku)
+                          ? 'Purchased'
+                          : p.localizedPrice,
+                    ),
                   ),
                 ],
               )
@@ -91,7 +85,10 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
     if (available.hasValue) availableProducts = available.value;
 
     final purchased = await widget.purchasesPlugin.getPurchasedProducts();
-    if (available.hasValue) purchasedProducts = purchased.value;
+    if (available.hasValue) {
+      purchasedProducts.clear();
+      purchasedProducts.addAll(purchased.value);
+    }
   }
 
   VoidCallback _startPurchase(
@@ -115,10 +112,10 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
       widget.purchasesPlugin.finishPurchase(details);
       if (!purchasedProducts.any((product) => product.sku == details.sku)) {
         purchasedProducts.add(details);
-        _showEmptyConsumableSnackbar(details.sku, 'Purchased', context);
+        _showSnackbar(details.sku, 'Purchased', context);
         setState(() {});
       } else {
-        _showEmptyConsumableSnackbar(details.sku, 'Granted for free', context);
+        _showSnackbar(details.sku, 'Granted for free', context);
       }
     }
 
@@ -132,7 +129,7 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
     return purchasedProducts.any((p) => p.sku == sku);
   }
 
-  void _showEmptyConsumableSnackbar(
+  void _showSnackbar(
     final String sku,
     final String text,
     final BuildContext context,

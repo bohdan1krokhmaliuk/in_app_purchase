@@ -3,6 +3,7 @@ import 'package:in_app_purchase/plugin/apple_in_app_purchases.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
 import 'package:in_app_purchase_example/components/consumables_card.dart';
 import 'package:in_app_purchase_example/components/non_consumable_card.dart';
+import 'package:in_app_purchase_example/components/non_renewing_card.dart';
 import 'package:in_app_purchase_example/components/status_card.dart';
 
 void main() {
@@ -60,6 +61,11 @@ class _MyAppState extends State<MyApp> {
               key: const ValueKey('Non-Consumables'),
               padding: cardInsets,
               child: NonConsumablesCard(purchasesPlugin: purchasesPlugin),
+            ),
+            Padding(
+              key: const ValueKey('Non-Renewing'),
+              padding: cardInsets,
+              child: NonRenewingCard(purchasesPlugin: purchasesPlugin),
             ),
           ],
         ),

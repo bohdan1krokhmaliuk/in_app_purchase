@@ -84,17 +84,13 @@ class _ConsumablesCardState extends State<ConsumablesCard> {
                   ),
                   const SizedBox(height: 20),
                   const Divider(thickness: 1.0, indent: 16.0, endIndent: 16.0),
-                  ProductComponent(
-                    text: availableProducts.first.title,
-                    price: availableProducts.first.localizedPrice,
-                    icon: SkuIcon(sku: availableProducts.first.sku),
-                    callback: _startPurchase(availableProducts.first),
-                  ),
-                  ProductComponent(
-                    text: availableProducts.last.title,
-                    price: availableProducts.last.localizedPrice,
-                    icon: SkuIcon(sku: availableProducts.last.sku),
-                    callback: _startPurchase(availableProducts.last),
+                  ...availableProducts.map<ProductComponent>(
+                    (p) => ProductComponent(
+                      text: p.title,
+                      icon: SkuIcon(sku: p.sku),
+                      callback: _startPurchase(p),
+                      price: availableProducts.first.localizedPrice,
+                    ),
                   ),
                 ],
               )
@@ -142,6 +138,8 @@ class _ConsumablesCardState extends State<ConsumablesCard> {
     }
   }
 
+  /// [IOS] Consumables are not managed by storekit so make sure that
+  /// you handle consumables on your side.
   Future<void> _handleSuccessfulPurchase(final String sku) async {
     final storage = await SharedPreferences.getInstance();
     if (sku == Sku.bill.id) {
