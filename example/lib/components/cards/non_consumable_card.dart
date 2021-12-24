@@ -5,8 +5,10 @@ import 'package:in_app_purchase/models/base/in_app_purchase.dart';
 import 'package:in_app_purchase/models/base/transaction_details.dart';
 import 'package:in_app_purchase/models/base/transaction_state.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
+import 'package:in_app_purchase_example/components/cards/card_base.dart';
+import 'package:in_app_purchase_example/components/icons/sku_icon.dart';
+import 'package:in_app_purchase_example/components/mixin/snack_bar_mixin.dart';
 import 'package:in_app_purchase_example/components/product_component.dart';
-import 'package:in_app_purchase_example/components/sku_icon.dart';
 import 'package:in_app_purchase_example/skus.dart';
 
 class NonConsumablesCard extends StatefulWidget {
@@ -19,7 +21,8 @@ class NonConsumablesCard extends StatefulWidget {
   State<NonConsumablesCard> createState() => _NonConsumablesCardState();
 }
 
-class _NonConsumablesCardState extends State<NonConsumablesCard> {
+class _NonConsumablesCardState extends State<NonConsumablesCard>
+    with SnackBarMixin {
   List<InAppPurchase> availableProducts = [];
   List<PurchaseDetails> purchasedProducts = [];
   StreamSubscription<TransactionDetails>? listener;
@@ -40,36 +43,29 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 8,
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: isInitialized
-            ? Column(
-                children: [
-                  const Text('Non-Consumables', style: _titleStyle),
-                  const SizedBox(height: 11),
-                  const Divider(thickness: 1.0, indent: 16.0, endIndent: 16.0),
-                  ...availableProducts.map<ProductComponent>(
-                    (p) => ProductComponent(
+    return CardBase(
+      height: 164,
+      child: isInitialized
+          ? Column(
+              children: [
+                const Text('Non-Consumables', style: _titleStyle),
+                const SizedBox(height: 5.0),
+                const Divider(thickness: 0.7),
+                ...availableProducts.map<ProductComponent>(
+                  (p) {
+                    final isPurchased = _isProductPurchased(p.sku);
+                    return ProductComponent(
                       text: p.title,
                       icon: SkuIcon(sku: p.sku),
                       callback: _startPurchase(p, context),
-                      price: _isProductPurchased(p.sku)
-                          ? 'Purchased'
-                          : p.localizedPrice,
-                    ),
-                  ),
-                ],
-              )
-            : const Center(child: CircularProgressIndicator()),
-      ),
+                      price: isPurchased ? 'Purchased' : p.localizedPrice,
+                      buttonColor: isPurchased ? Colors.grey : Colors.green,
+                    );
+                  },
+                ),
+              ],
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -112,10 +108,10 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
       widget.purchasesPlugin.finishPurchase(details);
       if (!purchasedProducts.any((product) => product.sku == details.sku)) {
         purchasedProducts.add(details);
-        _showSnackbar(details.sku, 'Purchased', context);
+        _showSnackbar(details.sku, 'Purchased');
         setState(() {});
       } else {
-        _showSnackbar(details.sku, 'Granted for free', context);
+        _showSnackbar(details.sku, 'Granted for free');
       }
     }
 
@@ -129,28 +125,8 @@ class _NonConsumablesCardState extends State<NonConsumablesCard> {
     return purchasedProducts.any((p) => p.sku == sku);
   }
 
-  void _showSnackbar(
-    final String sku,
-    final String text,
-    final BuildContext context,
-  ) async {
+  void _showSnackbar(final String sku, final String text) async {
     final icon = SkuIcon(sku: sku, dimension: 23);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: Colors.green[200],
-        duration: const Duration(seconds: 1),
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            Text(
-              ' $text ',
-              style: const TextStyle(fontSize: 20, color: Colors.black),
-            ),
-            icon,
-          ],
-        ),
-      ),
-    );
+    showSnackbar(text, icon: icon);
   }
 }

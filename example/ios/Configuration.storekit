@@ -7,8 +7,8 @@
       "internalID" : "933C290A",
       "localizations" : [
         {
-          "description" : "Premium sub",
-          "displayName" : "Premium sub",
+          "description" : "Premium subscription",
+          "displayName" : "Premium subscription",
           "locale" : "en_US"
         }
       ],
@@ -23,7 +23,7 @@
       "localizations" : [
         {
           "description" : "Super premium subscription",
-          "displayName" : "Premium+ sub",
+          "displayName" : "Premium+ subscription",
           "locale" : "en_US"
         }
       ],

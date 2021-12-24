@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
 class BillIcon extends StatelessWidget {
-  const BillIcon({Key? key, this.width = 35.0}) : super(key: key);
-  final double width;
+  const BillIcon({Key? key, this.size = 35.0}) : super(key: key);
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    final height = width / 1.3;
     return Container(
-      width: width,
-      height: height,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.green,
@@ -17,8 +16,8 @@ class BillIcon extends StatelessWidget {
       ),
       child: Icon(
         Icons.money,
-        size: height,
-        color: Colors.green[200],
+        size: size,
+        color: Colors.green[100],
       ),
     );
   }

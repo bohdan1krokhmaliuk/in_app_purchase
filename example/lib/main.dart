@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/plugin/apple_in_app_purchases.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
-import 'package:in_app_purchase_example/components/consumables_card.dart';
-import 'package:in_app_purchase_example/components/non_consumable_card.dart';
-import 'package:in_app_purchase_example/components/non_renewing_card.dart';
-import 'package:in_app_purchase_example/components/status_card.dart';
+import 'package:in_app_purchase_example/components/cards/consumables_card.dart';
+import 'package:in_app_purchase_example/components/cards/non_consumable_card.dart';
+import 'package:in_app_purchase_example/components/cards/non_renewing_card.dart';
+import 'package:in_app_purchase_example/components/cards/status_card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,35 +40,29 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    const cardInsets = EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
+    const divider = SizedBox(height: 6.0);
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Awesome purchases')),
         backgroundColor: Colors.grey[100],
-        body: ListView(
-          children: [
-            Padding(
-              key: const ValueKey('Status'),
-              padding: cardInsets,
-              child: StatusCard(isPluginInitialized: isPluginInitialized),
-            ),
-            Padding(
-              key: const ValueKey('Consumables'),
-              padding: cardInsets,
-              child: ConsumablesCard(purchasesPlugin: purchasesPlugin),
-            ),
-            Padding(
-              key: const ValueKey('Non-Consumables'),
-              padding: cardInsets,
-              child: NonConsumablesCard(purchasesPlugin: purchasesPlugin),
-            ),
-            Padding(
-              key: const ValueKey('Non-Renewing'),
-              padding: cardInsets,
-              child: NonRenewingCard(purchasesPlugin: purchasesPlugin),
-            ),
-          ],
-        ),
+        body: Builder(builder: (context) {
+          final padding =
+              const EdgeInsets.all(8.0) + MediaQuery.of(context).viewPadding;
+          return ListView(
+            padding: padding,
+            children: [
+              StatusCard(isPluginInitialized: isPluginInitialized),
+              if (isPluginInitialized) ...[
+                divider,
+                ConsumablesCard(purchasesPlugin: purchasesPlugin),
+                divider,
+                NonConsumablesCard(purchasesPlugin: purchasesPlugin),
+                divider,
+                NonRenewingCard(purchasesPlugin: purchasesPlugin),
+              ]
+            ],
+          );
+        }),
       ),
     );
   }

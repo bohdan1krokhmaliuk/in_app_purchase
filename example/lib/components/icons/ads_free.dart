@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PremiumFeatureIcon extends StatelessWidget {
-  const PremiumFeatureIcon({Key? key, this.radius = 30.0}) : super(key: key);
+class AdsFreeIcon extends StatelessWidget {
+  const AdsFreeIcon({Key? key, this.radius = 30.0}) : super(key: key);
   final double radius;
 
   @override
@@ -15,7 +15,7 @@ class PremiumFeatureIcon extends StatelessWidget {
         ),
         child: Icon(
           Icons.not_interested,
-          color: Colors.white,
+          color: Colors.red[100],
           size: radius,
         ),
       );

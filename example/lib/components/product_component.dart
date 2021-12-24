@@ -7,22 +7,23 @@ class ProductComponent extends StatelessWidget {
     required final this.price,
     required final this.callback,
     final this.icon,
+    final this.buttonColor = Colors.green,
     final this.textStyle = const TextStyle(fontSize: 16.0, color: Colors.black),
   }) : super(key: key);
 
-  final Widget? icon;
   final String text;
   final String price;
-
+  final Color buttonColor;
   final TextStyle textStyle;
+
+  final Widget? icon;
   final VoidCallback? callback;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 60.0,
+    return SizedBox(
+      height: 45.0,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
           if (icon != null) icon!,
@@ -36,7 +37,12 @@ class ProductComponent extends StatelessWidget {
           ),
           TextButton(
             onPressed: callback,
-            child: Text(price, style: textStyle),
+            child: Text(price),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(70, 30),
+              backgroundColor: buttonColor,
+              primary: Colors.white,
+            ),
           )
         ],
       ),

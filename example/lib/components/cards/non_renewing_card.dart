@@ -5,8 +5,10 @@ import 'package:in_app_purchase/models/base/in_app_purchase.dart';
 import 'package:in_app_purchase/models/base/transaction_details.dart';
 import 'package:in_app_purchase/models/base/transaction_state.dart';
 import 'package:in_app_purchase/plugin/in_app_purchases.dart';
+import 'package:in_app_purchase_example/components/cards/card_base.dart';
+import 'package:in_app_purchase_example/components/mixin/snack_bar_mixin.dart';
 import 'package:in_app_purchase_example/components/product_component.dart';
-import 'package:in_app_purchase_example/components/sku_icon.dart';
+import 'package:in_app_purchase_example/components/icons/sku_icon.dart';
 import 'package:in_app_purchase_example/skus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +22,7 @@ class NonRenewingCard extends StatefulWidget {
   State<NonRenewingCard> createState() => _NonRenewingCardState();
 }
 
-class _NonRenewingCardState extends State<NonRenewingCard> {
+class _NonRenewingCardState extends State<NonRenewingCard> with SnackBarMixin {
   List<InAppPurchase> availableProducts = [];
   StreamSubscription<TransactionDetails>? listener;
 
@@ -41,55 +43,56 @@ class _NonRenewingCardState extends State<NonRenewingCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 8,
-      child: Container(
-        height: 295,
-        width: double.infinity,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: isInitialized
-            ? Column(
-                children: [
-                  const Text('Non-Renewing Subscriptions', style: _titleStyle),
-                  const SizedBox(height: 20),
-                  Row(
-                    textBaseline: TextBaseline.alphabetic,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    children: Sku.nonRenewingIdentifiers
-                        .map<Widget>(
-                          (sku) => _SubscriptionStatus(
-                            name: skuName(sku),
-                            duration: '${subscriptionDurations[sku]}m',
-                          ),
-                        )
-                        .toList()
-                      ..insert(1, const SizedBox(width: 20.0)),
-                  ),
-                  const SizedBox(height: 5),
-                  TextButton(
-                    onPressed: () => _simulateMonthSpent(context),
-                    child: const Text('Spend month'),
-                  ),
-                  const Divider(thickness: 1.0, indent: 16.0, endIndent: 16.0),
-                  ...availableProducts.map<ProductComponent>(
-                    (p) => ProductComponent(
-                      text: p.title,
-                      icon: SkuIcon(sku: p.sku),
-                      callback: _startPurchase(p, context),
-                      price: _hasActiveSubscription(p.sku)
-                          ? 'Extend ${p.localizedPrice}'
-                          : p.localizedPrice,
+    return CardBase(
+      height: 261,
+      child: isInitialized
+          ? Column(
+              children: [
+                const Text('Non-Renewing Subscriptions', style: _titleStyle),
+                const Divider(thickness: 0.7),
+                Row(
+                  textBaseline: TextBaseline.alphabetic,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  children: Sku.nonRenewingIdentifiers
+                      .map<Widget>(
+                        (sku) => _SubscriptionStatus(
+                          name: skuName(sku),
+                          duration: '${subscriptionDurations[sku]}m',
+                        ),
+                      )
+                      .toList()
+                    ..insert(1, const SizedBox(width: 20.0)),
+                ),
+                const SizedBox(height: 5),
+                TextButton(
+                  child: const SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      'Simulate month passed',
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                ],
-              )
-            : const Center(child: CircularProgressIndicator()),
-      ),
+                  onPressed: () => _simulateMonthPassed(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    primary: Colors.white,
+                  ),
+                ),
+                const Divider(thickness: 0.7),
+                ...availableProducts.map<ProductComponent>(
+                  (p) => ProductComponent(
+                    text: p.title,
+                    icon: SkuIcon(sku: p.sku),
+                    callback: _startPurchase(p, context),
+                    price: _hasActiveSubscription(p.sku)
+                        ? 'Extend ${p.localizedPrice}'
+                        : p.localizedPrice,
+                  ),
+                ),
+              ],
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -143,7 +146,7 @@ class _NonRenewingCardState extends State<NonRenewingCard> {
         await storage.setInt(sku, extendedDuration);
 
         final actionText = currentDuration > 0 ? 'Extended' : 'Subscribed for';
-        _showSnackbar('$actionText ${skuName(sku)}', context);
+        showSnackbar('$actionText ${skuName(sku)}');
       }
 
       setState(() {});
@@ -160,9 +163,10 @@ class _NonRenewingCardState extends State<NonRenewingCard> {
     return currentDuration != null && currentDuration > 0;
   }
 
-  Future<void> _simulateMonthSpent(final BuildContext context) async {
+  Future<void> _simulateMonthPassed(final BuildContext context) async {
     final storage = await SharedPreferences.getInstance();
 
+    final finishedSkus = <String>[];
     for (final sku in subscriptionDurations.keys) {
       final currentDuration = subscriptionDurations[sku];
       if (currentDuration != null && currentDuration > 0) {
@@ -170,47 +174,19 @@ class _NonRenewingCardState extends State<NonRenewingCard> {
         subscriptionDurations[sku] = reducedDuration;
         await storage.setInt(sku, reducedDuration);
 
-        if (reducedDuration == 0) {
-          _showSnackbar(
-            '${skuName(sku)} subscription finished',
-            context,
-            color: Colors.red[200],
-          );
-        }
+        if (reducedDuration == 0) finishedSkus.add(sku);
       }
     }
 
     if (mounted) setState(() {});
-    _showSnackbar('Month spent', context);
-  }
+    showSnackbar('Month passed');
 
-  void _showSnackbar(
-    final String text,
-    final BuildContext context, {
-    final Widget? icon,
-    final Color? color,
-  }) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: color ?? Colors.green[200],
-        duration: const Duration(seconds: 1),
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) icon,
-            Flexible(
-              child: Text(
-                ' $text ',
-                maxLines: 3,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, color: Colors.black),
-              ),
-            ),
-            if (icon != null) icon,
-          ],
-        ),
-      ),
-    );
+    for (final sku in finishedSkus) {
+      showSnackbar(
+        '${skuName(sku)} subscription finished',
+        color: Colors.orange,
+      );
+    }
   }
 
   String skuName(final String sku) {

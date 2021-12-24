@@ -15,7 +15,7 @@ class CoinIcon extends StatelessWidget {
         ),
         child: Icon(
           Icons.monetization_on_outlined,
-          color: Colors.amber[200],
+          color: Colors.amber[100],
           size: radius,
         ),
       );
