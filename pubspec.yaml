@@ -7,8 +7,8 @@ environment:
   flutter: ">=1.20.0"
 
 dependencies:
-  http: ^0.13.0
-  platform: ^3.0.0
+  http: ^0.13.4
+  platform: ^3.1.0
   flutter:
     sdk: flutter
 
@@ -16,7 +16,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^1.0.0
+  flutter_lints: ^2.0.1
 
 flutter:
   plugin:

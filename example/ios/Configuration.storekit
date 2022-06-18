@@ -104,73 +104,93 @@
       "localizations" : [
 
       ],
-      "name" : "Auto renewable group first",
+      "name" : "Basic subscription group",
       "subscriptions" : [
         {
           "adHocOffers" : [
 
           ],
-          "displayPrice" : "0.99",
+          "displayPrice" : "4.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "FD8D1723",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "Basic subscription monthly ",
+              "displayName" : "Lv1 Basic monthly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.auto.renewable.first",
+          "productID" : "com.auto.renewable.basic.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Group first subscription first",
+          "referenceName" : "Basic subscription monthly",
           "subscriptionGroupID" : "7645009D",
           "type" : "RecurringSubscription"
         },
         {
           "adHocOffers" : [
-            {
-              "displayPrice" : "0.99",
-              "internalID" : "14F0A693",
-              "numberOfPeriods" : 1,
-              "offerID" : "com.first.year.offer",
-              "paymentMode" : "payAsYouGo",
-              "referenceName" : "First year for 1 dollar",
-              "subscriptionPeriod" : "P1Y"
-            },
-            {
-              "internalID" : "3690B26B",
-              "offerID" : "com.first.year.free",
-              "paymentMode" : "free",
-              "referenceName" : "First year free",
-              "subscriptionPeriod" : "P3D"
-            },
-            {
-              "displayPrice" : "4.99",
-              "internalID" : "50B1530C",
-              "numberOfPeriods" : 1,
-              "offerID" : "com.first.year.pay.as.you.go",
-              "paymentMode" : "payAsYouGo",
-              "referenceName" : "First year pay as you go",
-              "subscriptionPeriod" : "P1Y"
-            }
+
           ],
-          "displayPrice" : "9.99",
+          "displayPrice" : "49.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "435D4643",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "Basic subscription yearly",
+              "displayName" : "Lv1 Basic yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.auto.renewable.first",
+          "productID" : "com.auto.renewable.basic.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Group first subscription second + 1st year offer",
+          "referenceName" : "Basic subscription yearly",
+          "subscriptionGroupID" : "7645009D",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "displayPrice" : "59.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "D2F68E2D",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Basic+ subscription yearly",
+              "displayName" : "Lv2 Basic+ yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.auto.renewable.basic.plus.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Basic+ subscription yearly",
+          "subscriptionGroupID" : "7645009D",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "displayPrice" : "99.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "9AA16E53",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Basic++ yearly",
+              "displayName" : "Lv3 Basic++ yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.auto.renewable.basic.plus.plus.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Basic++ subscription yearly",
           "subscriptionGroupID" : "7645009D",
           "type" : "RecurringSubscription"
         }
@@ -181,13 +201,13 @@
       "localizations" : [
 
       ],
-      "name" : "Auto renewable group second",
+      "name" : "Premium subscription group",
       "subscriptions" : [
         {
           "adHocOffers" : [
 
           ],
-          "displayPrice" : "0.99",
+          "displayPrice" : "29.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "7C2D1AA6",
@@ -198,14 +218,14 @@
           },
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "Premium subscription quaterly + first 2 weeks",
+              "displayName" : "Lv1 Premium quaterly ",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.auto.renewable.first.intro",
-          "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Group second subscription first + intro",
+          "productID" : "com.auto.renewable.premium.quaterly",
+          "recurringSubscriptionPeriod" : "P3M",
+          "referenceName" : "Premium subscription quaterly + first 2 weeks free",
           "subscriptionGroupID" : "BD931A64",
           "type" : "RecurringSubscription"
         },
@@ -213,21 +233,21 @@
           "adHocOffers" : [
 
           ],
-          "displayPrice" : "9.99",
+          "displayPrice" : "99.99",
           "familyShareable" : true,
           "groupNumber" : 1,
           "internalID" : "91C4C5EF",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "Premium subscription yearly + family sharing",
+              "displayName" : "Lv1 Premium yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.temporary.id",
+          "productID" : "com.auto.renewable.premium.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Group second subscription second + family sharing",
+          "referenceName" : "Premium subscription yearly + family sharing",
           "subscriptionGroupID" : "BD931A64",
           "type" : "RecurringSubscription"
         }

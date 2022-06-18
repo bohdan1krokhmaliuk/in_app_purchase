@@ -59,10 +59,17 @@ class AppleInAppPurchase implements InAppPurchase {
                 numberOfUnits: json['subscriptionPeriodNumber'],
               ),
         discounts = _convertFromList(
-          List<Map<String, dynamic>>.from(json['discounts']),
+          (json['discounts'] as List?)
+                  ?.map<Map<String, dynamic>>(
+                    (j) => Map<String, dynamic>.from(j),
+                  )
+                  .toList() ??
+              <Map<String, dynamic>>[],
         ),
         introductoryDiscount = json['introductoryDiscount'] != null
-            ? AppleDiscount.fromJSON(json['introductoryDiscount'])
+            ? AppleDiscount.fromJSON(
+                Map<String, dynamic>.from(json['introductoryDiscount']),
+              )
             : null;
 
   static List<AppleDiscount> _convertFromList(

@@ -56,7 +56,7 @@ class _NonConsumablesCardState extends State<NonConsumablesCard>
                     final isPurchased = _isProductPurchased(p.sku);
                     return ProductComponent(
                       text: p.title,
-                      icon: SkuIcon(sku: p.sku),
+                      icon: Sku.hasIcon(p.sku) ? SkuIcon(sku: p.sku) : null,
                       callback: _startPurchase(p, context),
                       price: isPurchased ? 'Purchased' : p.localizedPrice,
                       buttonColor: isPurchased ? Colors.grey : Colors.green,

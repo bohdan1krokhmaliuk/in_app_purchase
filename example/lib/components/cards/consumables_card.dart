@@ -72,6 +72,11 @@ class _ConsumablesCardState extends State<ConsumablesCard> with SnackBarMixin {
                 ...Sku.consumableIdentifiers
                     .map<Widget>(
                       (sku) => TextButton(
+                        onPressed: () => _spend(sku),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          primary: Colors.white,
+                        ),
                         child: SizedBox(
                           width: double.infinity,
                           child: Row(
@@ -82,11 +87,6 @@ class _ConsumablesCardState extends State<ConsumablesCard> with SnackBarMixin {
                             ],
                           ),
                         ),
-                        onPressed: () => _spend(sku),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          primary: Colors.white,
-                        ),
                       ),
                     )
                     .toList(),
@@ -94,7 +94,7 @@ class _ConsumablesCardState extends State<ConsumablesCard> with SnackBarMixin {
                 ...availableProducts.map<ProductComponent>(
                   (p) => ProductComponent(
                     text: p.title,
-                    icon: SkuIcon(sku: p.sku),
+                    icon: Sku.hasIcon(p.sku) ? SkuIcon(sku: p.sku) : null,
                     callback: _startPurchase(p),
                     price: availableProducts.first.localizedPrice,
                   ),

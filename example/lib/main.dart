@@ -5,6 +5,7 @@ import 'package:in_app_purchase_example/components/cards/consumables_card.dart';
 import 'package:in_app_purchase_example/components/cards/non_consumable_card.dart';
 import 'package:in_app_purchase_example/components/cards/non_renewing_card.dart';
 import 'package:in_app_purchase_example/components/cards/status_card.dart';
+import 'package:in_app_purchase_example/components/cards/subscriptions_card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -58,7 +59,10 @@ class _MyAppState extends State<MyApp> {
                 divider,
                 NonConsumablesCard(purchasesPlugin: purchasesPlugin),
                 divider,
+                SubscriptionsCard(purchasesPlugin: purchasesPlugin),
+                divider,
                 NonRenewingCard(purchasesPlugin: purchasesPlugin),
+                divider,
               ]
             ],
           );

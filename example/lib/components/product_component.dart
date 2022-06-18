@@ -27,7 +27,7 @@ class ProductComponent extends StatelessWidget {
       child: Row(
         children: [
           if (icon != null) icon!,
-          const SizedBox(width: 5.0),
+          if (icon != null) const SizedBox(width: 5.0),
           Expanded(
             child: Text(
               text,
@@ -37,12 +37,12 @@ class ProductComponent extends StatelessWidget {
           ),
           TextButton(
             onPressed: callback,
-            child: Text(price),
             style: TextButton.styleFrom(
               minimumSize: const Size(70, 30),
               backgroundColor: buttonColor,
               primary: Colors.white,
             ),
+            child: Text(price),
           )
         ],
       ),

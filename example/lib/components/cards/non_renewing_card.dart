@@ -66,6 +66,11 @@ class _NonRenewingCardState extends State<NonRenewingCard> with SnackBarMixin {
                 ),
                 const SizedBox(height: 5),
                 TextButton(
+                  onPressed: () => _simulateMonthPassed(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    primary: Colors.white,
+                  ),
                   child: const SizedBox(
                     width: double.infinity,
                     child: Text(
@@ -73,17 +78,12 @@ class _NonRenewingCardState extends State<NonRenewingCard> with SnackBarMixin {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  onPressed: () => _simulateMonthPassed(context),
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    primary: Colors.white,
-                  ),
                 ),
                 const Divider(thickness: 0.7),
                 ...availableProducts.map<ProductComponent>(
                   (p) => ProductComponent(
                     text: p.title,
-                    icon: SkuIcon(sku: p.sku),
+                    icon: Sku.hasIcon(p.sku) ? SkuIcon(sku: p.sku) : null,
                     callback: _startPurchase(p, context),
                     price: _hasActiveSubscription(p.sku)
                         ? 'Extend ${p.localizedPrice}'
