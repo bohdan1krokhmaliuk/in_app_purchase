@@ -1,4 +1,4 @@
-package com.kroha.in_app_purchase
+package com.in_app_purchase.billing
 
 // Incoming methods
 class Method {

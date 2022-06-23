@@ -1,3 +1,3 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.kroha.in_app_purchase">
+  package="com.in_app_purchase.billing">
 </manifest>

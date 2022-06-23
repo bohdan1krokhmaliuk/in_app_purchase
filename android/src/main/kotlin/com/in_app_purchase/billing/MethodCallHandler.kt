@@ -1,4 +1,4 @@
-package com.kroha.in_app_purchase
+package com.in_app_purchase.billing
 
 import android.app.Activity
 import android.app.Application
@@ -9,10 +9,10 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel.*
 import io.flutter.plugin.common.MethodChannel
 
-import com.kroha.in_app_purchase.billingClientService.BillingClientService
-import com.kroha.in_app_purchase.billingClientService.BillingClientServiceFactory
-import com.kroha.in_app_purchase.errorHandler.ErrorHandler
-import com.kroha.in_app_purchase.errorHandler.PurchaseError
+import com.in_app_purchase.billing.billingClientService.BillingClientService
+import com.in_app_purchase.billing.billingClientService.BillingClientServiceFactory
+import com.in_app_purchase.billing.errorHandler.ErrorHandler
+import com.in_app_purchase.billing.errorHandler.PurchaseError
 
 class MethodCallHandler(
     private val channel: MethodChannel,

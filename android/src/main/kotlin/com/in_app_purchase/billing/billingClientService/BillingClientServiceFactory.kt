@@ -1,10 +1,10 @@
-package com.kroha.in_app_purchase.billingClientService
+package com.in_app_purchase.billing.billingClientService
 
 import android.content.Context
 import com.android.billingclient.api.BillingClient
-import com.kroha.in_app_purchase.errorHandler.ErrorHandler
-import com.kroha.in_app_purchase.logger.LoggerImpl
-import com.kroha.in_app_purchase.mapper.BillingClientMapperImpl
+import com.in_app_purchase.billing.errorHandler.ErrorHandler
+import com.in_app_purchase.billing.logger.LoggerImpl
+import com.in_app_purchase.billing.mapper.BillingClientMapperImpl
 import io.flutter.plugin.common.MethodChannel
 
 class BillingClientServiceFactory {

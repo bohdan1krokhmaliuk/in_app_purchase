@@ -1,4 +1,4 @@
-package com.kroha.in_app_purchase.errorHandler
+package com.in_app_purchase.billing.errorHandler
 
 import com.android.billingclient.api.BillingResult
 import io.flutter.plugin.common.MethodChannel.Result

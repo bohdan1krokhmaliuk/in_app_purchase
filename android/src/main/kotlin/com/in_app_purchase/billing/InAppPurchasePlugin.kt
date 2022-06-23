@@ -1,7 +1,7 @@
-package com.kroha.in_app_purchase
+package com.in_app_purchase.billing
 
-import com.kroha.in_app_purchase.billingClientService.BillingClientServiceFactory
-import com.kroha.in_app_purchase.errorHandler.ErrorHandlerImpl
+import com.in_app_purchase.billing.billingClientService.BillingClientServiceFactory
+import com.in_app_purchase.billing.errorHandler.ErrorHandlerImpl
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding

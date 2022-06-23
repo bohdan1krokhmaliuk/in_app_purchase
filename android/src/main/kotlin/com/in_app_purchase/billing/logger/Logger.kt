@@ -1,4 +1,4 @@
-package com.kroha.in_app_purchase.logger
+package com.in_app_purchase.billing.logger
 
 interface Logger {
     fun enable()

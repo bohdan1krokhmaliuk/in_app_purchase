@@ -1,4 +1,4 @@
-package com.kroha.in_app_purchase.mapper
+package com.in_app_purchase.billing.mapper
 
 import com.android.billingclient.api.*
 

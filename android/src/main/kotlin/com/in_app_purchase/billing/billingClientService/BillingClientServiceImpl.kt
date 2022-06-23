@@ -1,12 +1,12 @@
-package com.kroha.in_app_purchase.billingClientService
+package com.in_app_purchase.billing.billingClientService
 
 import android.app.Activity
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.*
-import com.kroha.in_app_purchase.OutMethod
-import com.kroha.in_app_purchase.errorHandler.*
-import com.kroha.in_app_purchase.logger.Logger
-import com.kroha.in_app_purchase.mapper.BillingClientMapper
+import com.in_app_purchase.billing.OutMethod
+import com.in_app_purchase.billing.errorHandler.*
+import com.in_app_purchase.billing.logger.Logger
+import com.in_app_purchase.billing.mapper.BillingClientMapper
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.*
 

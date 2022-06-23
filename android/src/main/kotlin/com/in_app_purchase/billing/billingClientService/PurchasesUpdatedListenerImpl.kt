@@ -1,12 +1,12 @@
-package com.kroha.in_app_purchase.billingClientService
+package com.in_app_purchase.billing.billingClientService
 
 import com.android.billingclient.api.BillingClient.*
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
-import com.kroha.in_app_purchase.OutMethod
-import com.kroha.in_app_purchase.logger.Logger
-import com.kroha.in_app_purchase.mapper.BillingClientMapperImpl
+import com.in_app_purchase.billing.OutMethod
+import com.in_app_purchase.billing.logger.Logger
+import com.in_app_purchase.billing.mapper.BillingClientMapperImpl
 import io.flutter.plugin.common.MethodChannel
 
 class PurchasesUpdatedListenerImpl(

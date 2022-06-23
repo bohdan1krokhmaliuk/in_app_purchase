@@ -1,4 +1,4 @@
-package com.kroha.in_app_purchase.billingClientService
+package com.in_app_purchase.billing.billingClientService
 
 import android.app.Activity
 import io.flutter.plugin.common.MethodChannel.Result
