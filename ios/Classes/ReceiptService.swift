@@ -28,12 +28,12 @@ class ReceiptServiceImpl :  NSObject, SKRequestDelegate, ReceiptService {
     
     func requestReceiptData(_ compeletion: @escaping (String?, FlutterError?)->()) {
         if isReceiptPresent {
+            applyReceiptData(compeletion)
+        } else {
             let refreshReceiptRequest = SKReceiptRefreshRequest()
             refreshReceiptRequest.delegate = self
             refreshReceiptRequest.start()
             refreshReceiptCallbacks.append(compeletion)
-        } else {
-            applyReceiptData(compeletion)
         }
     }
     

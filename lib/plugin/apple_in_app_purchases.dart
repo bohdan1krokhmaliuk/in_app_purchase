@@ -42,6 +42,7 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
 
   static const MethodChannel _channel = MethodChannel('in_app_purchase');
   final _controller = StreamController<AppleTransactionDetails>.broadcast();
+  Completer<List?>? _purchasedProductsCompleter;
 
   @override
   Stream<AppleTransactionDetails> get purchasesDetailsStream =>
@@ -114,9 +115,7 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
   @override
   Future<Result<List<AppleRestoreDetails>>> getPurchasedProducts() async {
     try {
-      final inAppPurchasesMap = await _channel.invokeListMethod(
-        'get_purchased_products',
-      );
+      final inAppPurchasesMap = await _requestPurchasedProducts();
 
       final purchasedProducts = inAppPurchasesMap
           ?.map((json) => AppleRestoreDetails.fromJson(
@@ -246,6 +245,20 @@ class AppleInAppPurchasesImpl implements AppleInAppPurchases {
     } on PlatformException catch (exception) {
       return Result.failed(exception);
     }
+  }
+
+  Future<List?> _requestPurchasedProducts() async {
+    if (_purchasedProductsCompleter != null) {
+      return _purchasedProductsCompleter!.future;
+    }
+
+    _purchasedProductsCompleter = Completer<List?>();
+    _purchasedProductsCompleter!.complete(_channel.invokeListMethod(
+      'get_purchased_products',
+    ));
+
+    return _purchasedProductsCompleter!.future
+      ..then((_) => _purchasedProductsCompleter = null);
   }
 
   Future<dynamic> _handler(final MethodCall call) async {

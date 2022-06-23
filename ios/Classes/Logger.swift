@@ -2,8 +2,6 @@
 //  Logger.swift
 //  in_app_purchase
 //
-//  Created by Elopage Work on 28.11.2021.
-//
 
 import Foundation
 
